@@ -16,6 +16,8 @@ namespace ThesisServer.Infrastructure.Configuration
             services.AddSingleton<IWebSocketRepository, WebSocketRepository>();
             services.AddScoped<IWebSocketHandler, WebSocketHandler>();
             services.AddSingleton<DebugRepository>();
+            services.AddScoped<INetworkService, NetworkService>();
+            services.AddScoped<IUserService, UserService>();
         }
     }
 }

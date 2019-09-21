@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ThesisServer.Data.Repository.Memory;
 
 namespace ThesisServer.Controllers
@@ -21,7 +17,8 @@ namespace ThesisServer.Controllers
 
         public IActionResult Index()
         {
-            return Json((_webSocketRepository.GetAllActiveUsers(), _debugRepository.Errors));
+            return View((_webSocketRepository.GetAllActiveUsers(), _debugRepository.Errors));
+            //return Json((ActiveUsers: _webSocketRepository.GetAllActiveUsers(), Errors: _debugRepository.Errors));
         }
     }
 }

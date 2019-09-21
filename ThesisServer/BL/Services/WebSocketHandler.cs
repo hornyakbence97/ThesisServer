@@ -71,21 +71,6 @@ namespace ThesisServer.BL.Services
                 default:
                     throw new RequestTypeInvalidException(requestType, webSocket);
             }
-
-
-            //switch (requestType)
-            //{
-            //    case WebSocketRequestType.NONE:
-            //        throw new RequestTypeInvalidException(requestType, webSocket);
-            //    case WebSocketRequestType.AUTHENTICATION:
-            //        await ProcessAuthentication(webSocket);
-            //        break;
-            //    case WebSocketRequestType.RECEIVED_COMFIRMATION:
-            //        await ProcessReceivedConfirmation(webSocket);
-            //        break;
-            //    default:
-            //        throw new ArgumentOutOfRangeException(nameof(requestType), requestType, null);
-            //}
         }
 
         private async Task ProcessReceivedConfirmation(ReceivedConfirmationDto dto, WebSocket webSocket)
@@ -131,7 +116,7 @@ namespace ThesisServer.BL.Services
             }
         }
 
-        private async Task<(TResult, string)> ReadWebSocketAsAsync<TResult>(WebSocket webSocket)
+        private async Task<(TResult Model, string Json)> ReadWebSocketAsAsync<TResult>(WebSocket webSocket)
         {
             var jsonText = await ReadStringContentFromWebSocketAsync(webSocket);
 
@@ -146,7 +131,7 @@ namespace ThesisServer.BL.Services
                 throw new InvalidInputException(jsonText, webSocket);
             }
 
-            return (JsonConvert.DeserializeObject<TResult>(jsonText), jsonText);
+            return (obj, jsonText);
         }
 
         private async Task WriteStringToWebSocketAsync(string text, WebSocket webSocket)

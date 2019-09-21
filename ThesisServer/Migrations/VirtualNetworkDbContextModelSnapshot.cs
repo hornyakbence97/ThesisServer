@@ -19,6 +19,20 @@ namespace ThesisServer.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+            modelBuilder.Entity("ThesisServer.Data.Repository.Db.NetworkEntity", b =>
+                {
+                    b.Property<Guid>("NetworkId")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("NetworkName");
+
+                    b.Property<byte[]>("NetworkPasswordHash");
+
+                    b.HasKey("NetworkId");
+
+                    b.ToTable("Network");
+                });
+
             modelBuilder.Entity("ThesisServer.Data.Repository.Db.UserEntity", b =>
                 {
                     b.Property<Guid>("Token1")
@@ -26,13 +40,25 @@ namespace ThesisServer.Migrations
 
                     b.Property<string>("FriendlyName");
 
+                    b.Property<Guid?>("NetworkId");
+
                     b.Property<Guid>("Token2");
 
                     b.HasKey("Token1");
 
+                    b.HasIndex("NetworkId");
+
                     b.HasIndex("Token2");
 
                     b.ToTable("User");
+                });
+
+            modelBuilder.Entity("ThesisServer.Data.Repository.Db.UserEntity", b =>
+                {
+                    b.HasOne("ThesisServer.Data.Repository.Db.NetworkEntity", "Network")
+                        .WithMany("Users")
+                        .HasForeignKey("NetworkId")
+                        .HasConstraintName("ForeignKey_UserEntity_NetworkEntity");
                 });
 #pragma warning restore 612, 618
         }
