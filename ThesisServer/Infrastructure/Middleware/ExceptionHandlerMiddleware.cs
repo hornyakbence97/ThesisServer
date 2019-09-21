@@ -73,7 +73,7 @@ namespace ThesisServer.Infrastructure.Middleware
                             ErrorMessage = handledException.ErrorMessage()
                         };
 
-                        if (handledException.IsWebSocketException())
+                        if (handledException.IsWebSocketException() && handledException.WebSocket() != null)
                         {
                             await handledException.WebSocket()
                                 .CloseAsync(
