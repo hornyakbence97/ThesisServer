@@ -30,6 +30,8 @@ namespace ThesisServer
 
             RegisterServices.Register(services, dataBaseOption);
 
+            RegisterMappers.Register(services);
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
