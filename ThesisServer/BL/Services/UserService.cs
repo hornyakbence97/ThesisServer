@@ -16,7 +16,7 @@ namespace ThesisServer.BL.Services
             _dbContext = dbContext;
         }
 
-        public async Task<UserEntity> CreateUser(string friendlyName)
+        public async Task<UserEntity> CreateUser(string friendlyName, int maxSpace)
         {
             if (string.IsNullOrWhiteSpace(friendlyName))
             {
@@ -29,7 +29,8 @@ namespace ThesisServer.BL.Services
                 Token1 = Guid.NewGuid(),
                 Token2 = Guid.NewGuid(),
                 NetworkId = null,
-                Network = null
+                Network = null,
+                MaxSpace = maxSpace
             };
 
             var addedUser = await _dbContext.User.AddAsync(user);

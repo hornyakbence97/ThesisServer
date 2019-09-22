@@ -55,6 +55,23 @@ namespace ThesisServer.BL.Services
             await _dbContext.SaveDbChangesWithSuccessCheckAsync();
         }
 
+        public async Task<bool> IsUserConnectedToThisNetwork(UserEntity userEntity, NetworkEntity networkEntity)
+        {
+            var network =
+                await _dbContext
+                    .Network
+                    .Include(x => x.Users)
+                    .FirstOrDefaultAsync(x => x.NetworkId == networkEntity.NetworkId)
+                ?? throw new OperationFailedException(
+                    $"The networkId {networkEntity.NetworkId} not found", HttpStatusCode.NotFound, null);
+
+            var user =
+                await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userEntity.Token1)
+                ?? throw new OperationFailedException($"The user {userEntity.Token1} not found", HttpStatusCode.NotFound, null);
+
+            return network.Users.Any(x => x.Token1 == user.Token1);
+        }
+
         private void CheckCredentials(NetworkEntity networkEntity, string givenPassword)
         {
             var givePassHash = ComputeSha256Hash(givenPassword);

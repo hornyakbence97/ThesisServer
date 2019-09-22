@@ -18,6 +18,8 @@ namespace ThesisServer.Infrastructure.Configuration
             services.AddSingleton<DebugRepository>();
             services.AddScoped<INetworkService, NetworkService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IFileService, FileService>();
+            services.AddSingleton<OnlineUserRepository>();
         }
     }
 }

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ThesisServer.Data.Repository.Db;
 
 namespace ThesisServer.Migrations
 {
     [DbContext(typeof(VirtualNetworkDbContext))]
-    partial class VirtualNetworkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20190922154842_VirtualFileEntityCreatin")]
+    partial class VirtualFileEntityCreatin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,37 +83,12 @@ namespace ThesisServer.Migrations
                     b.ToTable("VirtualFile");
                 });
 
-            modelBuilder.Entity("ThesisServer.Data.Repository.Db.VirtualFilePieceEntity", b =>
-                {
-                    b.Property<Guid>("FilePieceId")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<Guid>("FileId");
-
-                    b.Property<long>("FilePieceSize");
-
-                    b.HasKey("FilePieceId");
-
-                    b.HasIndex("FileId");
-
-                    b.ToTable("VirtualFilePiece");
-                });
-
             modelBuilder.Entity("ThesisServer.Data.Repository.Db.UserEntity", b =>
                 {
                     b.HasOne("ThesisServer.Data.Repository.Db.NetworkEntity", "Network")
                         .WithMany("Users")
                         .HasForeignKey("NetworkId")
                         .HasConstraintName("ForeignKey_UserEntity_NetworkEntity");
-                });
-
-            modelBuilder.Entity("ThesisServer.Data.Repository.Db.VirtualFilePieceEntity", b =>
-                {
-                    b.HasOne("ThesisServer.Data.Repository.Db.VirtualFileEntity", "File")
-                        .WithMany("FilePieces")
-                        .HasForeignKey("FileId")
-                        .HasConstraintName("ForeignKey_VirtualFilePieceEntity_VirtualFileEntity")
-                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

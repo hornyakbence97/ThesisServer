@@ -18,10 +18,10 @@ namespace ThesisServer.Controllers
             _mapper = mapper;
         }
 
-        [Route("CreateUser/{friendlyName}")]
-        public async Task<IActionResult> CreateUser([FromRoute] string friendlyName)
+        [Route("CreateUser/{friendlyName}/{maxSpace}")]
+        public async Task<IActionResult> CreateUser([FromRoute] string friendlyName, [FromRoute] int maxSpace)
         {
-            var userCreated = await _userService.CreateUser(friendlyName);
+            var userCreated = await _userService.CreateUser(friendlyName, maxSpace);
 
             return Json(_mapper.Map<UserDto>(userCreated));
         }

@@ -24,7 +24,7 @@ namespace Tests.UnitTest
                 var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
                 var networkService = scope.ServiceProvider.GetRequiredService<INetworkService>();
 
-                user = await userService.CreateUser("Bence" + DateTime.Now.ToFileTimeUtc());
+                user = await userService.CreateUser("Bence" + DateTime.Now.ToFileTimeUtc(), Int32.MaxValue);
 
                 Assert.NotNull(user);
 
@@ -63,7 +63,7 @@ namespace Tests.UnitTest
                 var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
                 var networkService = scope.ServiceProvider.GetRequiredService<INetworkService>();
 
-                user = await userService.CreateUser("Bence" + DateTime.Now.ToFileTimeUtc());
+                user = await userService.CreateUser("Bence" + DateTime.Now.ToFileTimeUtc(), Int32.MaxValue);
 
                 Assert.NotNull(user);
 
