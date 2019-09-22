@@ -14,7 +14,7 @@ namespace ThesisServer.BL.Helper
             if (changedItems == 0)
                 throw new OperationFailedException(
                     message: "Unable to save database changes.",
-                    HttpStatusCode.InternalServerError,
+                    statusCode: HttpStatusCode.InternalServerError,
                     webSocket: null);
         }
     }

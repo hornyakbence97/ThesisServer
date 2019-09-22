@@ -79,7 +79,7 @@ namespace ThesisServer.Infrastructure.Middleware
                                 .CloseAsync(
                                     WebSocketCloseStatus.InternalServerError,
                                     statusDescription: $"Status code: {error.StatusCode}\n {error.ErrorMessage}",
-                                    CancellationToken.None);
+                                    cancellationToken: CancellationToken.None);
                         }
                         else
                         {
