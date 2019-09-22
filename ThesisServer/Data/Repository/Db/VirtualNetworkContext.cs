@@ -8,6 +8,8 @@ namespace ThesisServer.Data.Repository.Db
 
         public DbSet<UserEntity> User { get; set; }
         public DbSet<NetworkEntity> Network { get; set; }
+        public DbSet<VirtualFileEntity> VirtualFile { get; set; }
+        public DbSet<VirtualFilePieceEntity> VirtualFilePiece { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -15,7 +17,27 @@ namespace ThesisServer.Data.Repository.Db
 
             NetworkEntityModelCreating(modelBuilder);
 
+            VirtualFileEntityModelCreating(modelBuilder);
+
+            VirtualFilePieceModelCreating(modelBuilder);
+
             base.OnModelCreating(modelBuilder);
+        }
+
+        private void VirtualFilePieceModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<VirtualFilePieceEntity>().HasKey(x => x.FilePieceId);
+
+            modelBuilder.Entity<VirtualFilePieceEntity>()
+                .HasOne(x => x.File)
+                .WithMany(x => x.FilePieces)
+                .HasForeignKey(x => x.FileId)
+                .HasConstraintName("ForeignKey_VirtualFilePieceEntity_VirtualFileEntity");
+        }
+
+        private void VirtualFileEntityModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<VirtualFileEntity>().HasKey(x => x.FileId);
         }
 
         private void NetworkEntityModelCreating(ModelBuilder modelBuilder)
@@ -28,6 +50,7 @@ namespace ThesisServer.Data.Repository.Db
         {
             modelBuilder.Entity<UserEntity>().HasKey(x => x.Token1);
             modelBuilder.Entity<UserEntity>().HasIndex(x => x.Token2);
+            modelBuilder.Entity<UserEntity>().Property(x => x.MaxSpace).HasDefaultValue(300);
 
             modelBuilder
                 .Entity<UserEntity>()

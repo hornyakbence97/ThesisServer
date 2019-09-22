@@ -7,5 +7,6 @@ namespace ThesisServer.BL.Services
     {
         Task<NetworkEntity> CreateNetwork(string networkName, string passWord);
         Task AddUserToNetwork(NetworkEntity networkEntity, UserEntity user, string givenPassword);
+        Task<bool> IsUserConnectedToThisNetwork(UserEntity user, NetworkEntity network);
     }
 }
