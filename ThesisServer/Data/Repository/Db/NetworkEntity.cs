@@ -10,5 +10,6 @@ namespace ThesisServer.Data.Repository.Db
         public byte[] NetworkPasswordHash { get; set; }
 
         public List<UserEntity> Users { get; set; }
+        public List<VirtualFileEntity> Files { get; set; }
     }
 }
