@@ -15,5 +15,8 @@ namespace ThesisServer.Data.Repository.Db
         public Guid ModifiedBy { get; set; }
 
         public List<VirtualFilePieceEntity> FilePieces { get; set; }
+
+        public Guid NetworkId { get; set; }
+        public NetworkEntity Network { get; set; }
     }
 }

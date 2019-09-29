@@ -38,6 +38,13 @@ namespace ThesisServer.Data.Repository.Db
         private void VirtualFileEntityModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<VirtualFileEntity>().HasKey(x => x.FileId);
+
+            modelBuilder
+                .Entity<VirtualFileEntity>()
+                .HasOne(x => x.Network)
+                .WithMany(x => x.Files)
+                .HasForeignKey(x => x.NetworkId)
+                .HasConstraintName("ForeignKey_VirtualFileEntity_NetworkEntity");
         }
 
         private void NetworkEntityModelCreating(ModelBuilder modelBuilder)

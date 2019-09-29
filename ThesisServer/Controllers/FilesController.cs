@@ -30,5 +30,19 @@ namespace ThesisServer.Controllers
 
             return Ok();
         }
+
+        [Route("Fetch")]
+        [HttpPost]
+        public async Task<IActionResult> FetchFileList([FromBody] UserDto user)
+        {
+            var files = await _fileService.FetchAllFilesForUser(user.Token1);
+
+            if (files == null)
+            {
+                return BadRequest();
+            }
+
+            return Json(files);
+        }
     }
 }

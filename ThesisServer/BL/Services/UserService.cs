@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
 using ThesisServer.Infrastructure.Middleware.Helper.Exception;
@@ -38,6 +39,15 @@ namespace ThesisServer.BL.Services
             await _dbContext.SaveDbChangesWithSuccessCheckAsync();
 
             return addedUser.Entity;
+        }
+
+        public async Task<UserEntity> GetUserById(Guid userToken1)
+        {
+            return await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userToken1)
+                ?? throw new OperationFailedException(
+                    message: $"User {userToken1} not found",
+                    statusCode: HttpStatusCode.NotFound,
+                    webSocket: null);
         }
     }
 }
