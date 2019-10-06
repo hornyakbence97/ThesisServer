@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
 using ThesisServer.Data.Repository.Memory;
 using ThesisServer.Infrastructure.Middleware.Helper.Exception;
@@ -86,6 +88,53 @@ namespace ThesisServer.BL.Services
             }
 
             return returnList;
+        }
+
+        public async Task<List<VirtualFilePieceEntity>> GetRelatedFilePeacesForFile(Guid fileId)
+        {
+            var fileEntity = await _dbContext
+                                 .VirtualFile
+                                 .Include(x => x.FilePieces)
+                                 .Where(x => x.FileId == fileId).FirstOrDefaultAsync()
+                             ?? throw new OperationFailedException($"The file {fileId} not found in the db.",
+                                 HttpStatusCode.NotFound, null);
+
+            return fileEntity.FilePieces;
+        }
+
+        public async Task<VirtualFileEntity> AddFileToDelete(Guid dtoFileId, Guid dtoUserToken1Id)
+        {
+            var file = await _dbContext
+                           .VirtualFile
+                           .Include(x => x.FilePieces)
+                           .FirstOrDefaultAsync(x => x.FileId == dtoFileId)
+                       ?? throw new OperationFailedException($"The file {dtoFileId} not found", HttpStatusCode.NotFound,
+                           null);
+
+            var network = await _dbContext
+                .Network
+                .Include(x => x.Users)
+                .FirstOrDefaultAsync(x => x.NetworkId == file.NetworkId);
+
+            if (!network.Users.Any(x => x.Token1 == dtoUserToken1Id))
+            {
+                throw new OperationFailedException(
+                    $"The current user {dtoUserToken1Id} is not a part of the network the given file {dtoFileId} belongs to",
+                    HttpStatusCode.Forbidden, null);
+            }
+
+            foreach (var user in network.Users)
+            {
+                await _dbContext.DeleteItems.AddAsync(new DeleteFilesRequiredEntity
+                {
+                    FileId = file.FileId,
+                    UserId = user.Token1
+                });
+            }
+
+            await _dbContext.SaveDbChangesWithSuccessCheckAsync();
+
+            return file;
         }
     }
 }

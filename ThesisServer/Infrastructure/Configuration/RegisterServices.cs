@@ -20,6 +20,7 @@ namespace ThesisServer.Infrastructure.Configuration
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFileService, FileService>();
             services.AddSingleton<OnlineUserRepository>();
+            services.AddSingleton<OpenRequestsRepository>();
         }
     }
 }

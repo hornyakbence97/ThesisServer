@@ -10,6 +10,7 @@ namespace ThesisServer.Data.Repository.Db
         public DbSet<NetworkEntity> Network { get; set; }
         public DbSet<VirtualFileEntity> VirtualFile { get; set; }
         public DbSet<VirtualFilePieceEntity> VirtualFilePiece { get; set; }
+        public DbSet<DeleteFilesRequiredEntity> DeleteItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,7 +22,14 @@ namespace ThesisServer.Data.Repository.Db
 
             VirtualFilePieceModelCreating(modelBuilder);
 
+            DeleteFilesRequiredEntityModelCreating(modelBuilder);
+
             base.OnModelCreating(modelBuilder);
+        }
+
+        private void DeleteFilesRequiredEntityModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<DeleteFilesRequiredEntity>().HasKey(x => x.Id);
         }
 
         private void VirtualFilePieceModelCreating(ModelBuilder modelBuilder)
