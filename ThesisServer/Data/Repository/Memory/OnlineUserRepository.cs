@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using ThesisServer.Data.Repository.Db;
 
@@ -75,6 +76,51 @@ namespace ThesisServer.Data.Repository.Memory
             if (!listValue.Contains(filePieceId))
             {
                 listValue.Add(filePieceId);
+            }
+        }
+
+        public List<Guid> GetUsersWhoHaveTheFile(VirtualFilePieceEntity filePiece)
+        {
+            var response = new List<Guid>();
+
+            foreach (var user in FilePiecesInUsersOnline)
+            {
+                var fp = user.Value.ToList();
+
+                if (fp.Contains(filePiece.FilePieceId))
+                {
+                    response.Add(user.Key);
+                }
+            }
+
+            return response;
+        }
+
+        public void RemoveFilePeaceFromUser(Guid filePieceId, Guid userId)
+        {
+            var filePeaces = FilePiecesInUsersOnline.FirstOrDefault(x => x.Key == userId).Value;
+
+            ConcurrentBag<Guid> tenp = new ConcurrentBag<Guid>();
+
+            while (filePeaces.Count > 0)
+            {
+                Guid tmp;
+                if (filePeaces.TryTake(out tmp))
+                {
+                    if (tmp != filePieceId)
+                    {
+                        tenp.Add(tmp);
+                    }
+                }
+            }
+
+            while (tenp.Count > 0)
+            {
+                Guid bck;
+                if (tenp.TryTake(out bck))
+                {
+                    filePeaces.Add(bck);
+                }
             }
         }
     }

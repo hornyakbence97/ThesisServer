@@ -3,35 +3,23 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ThesisServer.Data.Repository.Db;
 
 namespace ThesisServer.Migrations
 {
     [DbContext(typeof(VirtualNetworkDbContext))]
-    partial class VirtualNetworkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20191002125235_filePeaceEntityAddOrderNumber")]
+    partial class filePeaceEntityAddOrderNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "2.1.4-rtm-31024")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-            modelBuilder.Entity("ThesisServer.Data.Repository.Db.DeleteFilesRequiredEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<Guid>("FileId");
-
-                    b.Property<Guid>("UserId");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DeleteItems");
-                });
 
             modelBuilder.Entity("ThesisServer.Data.Repository.Db.NetworkEntity", b =>
                 {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
@@ -10,12 +11,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
 using ThesisServer.Data.Repository.Memory;
 using ThesisServer.Infrastructure.Configuration;
 using ThesisServer.Infrastructure.Middleware.Helper;
 using ThesisServer.Infrastructure.Middleware.Helper.Exception;
 using ThesisServer.Model.DTO.Input;
+using ThesisServer.Model.DTO.WebSocketDto.Output;
+using DeleteFileDto = ThesisServer.Model.DTO.WebSocketDto.Output.DeleteFileDto;
 
 namespace ThesisServer.BL.Services
 {
@@ -23,15 +27,20 @@ namespace ThesisServer.BL.Services
     {
         private readonly IWebSocketRepository _webSocketRepository;
         private readonly VirtualNetworkDbContext _dbContext;
+        private readonly OnlineUserRepository _onlineUserRepository;
         private readonly WebSocketOption _options;
+        private readonly Random _random;
 
         public WebSocketHandler(
             IOptions<WebSocketOption> options,
             IWebSocketRepository webSocketRepository,
-            VirtualNetworkDbContext dbContext)
+            VirtualNetworkDbContext dbContext,
+            OnlineUserRepository onlineUserRepository)
         {
             _webSocketRepository = webSocketRepository;
             _dbContext = dbContext;
+            _onlineUserRepository = onlineUserRepository;
+            _random = new Random();
             _options = options.Value;
         }
 
@@ -73,10 +82,79 @@ namespace ThesisServer.BL.Services
             }
         }
 
+        public async Task CollectFilePeacesFromUsers(List<VirtualFilePieceEntity> filePeacesToCollect)
+        {
+            foreach (var filePeaceToCollect in filePeacesToCollect)
+            {
+                var usersWhoHaveIt = _onlineUserRepository
+                    .GetUsersWhoHaveTheFile(filePeaceToCollect)
+                    .Select(x => x.ToString())
+                    .ToList();
+
+                var webSockets = _webSocketRepository
+                    .GetAllActiveUsers()
+                    .Where(x => usersWhoHaveIt.Contains(x.Key))
+                    .Select(x => x.Value)
+                    .ToArray();
+
+                var selectedWebsocket = webSockets[_random.Next(webSockets.Length)];
+
+                await SendRequestToSendFilePeace(filePeaceToCollect.FilePieceId, selectedWebsocket);
+            }
+        }
+
+        public async Task SendFilePeaceToUser(byte[] fileBytes, Guid user, Guid filePeaceId)
+        {
+            var userToSend = _webSocketRepository
+                .GetAllActiveUsers()
+                .FirstOrDefault(x => x.Key == user.ToString())
+                .Value;
+
+            var dto = new SaveFileDto
+            {
+                RequestType = OutgoingRequestType.SAVE_FILE,
+                Files = new List<(byte[] Bytes, Guid Id)> {(fileBytes, filePeaceId)}
+            };
+
+            await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), userToSend);
+        }
+
+        public async Task SendDeleteRequestsForFile(VirtualFileEntity file)
+        {
+            var users = _onlineUserRepository.UsersInNetworksOnline.FirstOrDefault(x => x.Key == file.NetworkId).Value;
+
+            foreach (var user in users.ToList())
+            {
+                var websocket = _webSocketRepository.GetAllActiveUsers().FirstOrDefault(x => x.Key == user.ToString()).Value;
+
+                await SendRequestToDeleteFilePeaces(file.FilePieces, websocket);
+            }
+        }
+
+        private async Task SendRequestToDeleteFilePeaces(List<VirtualFilePieceEntity> filePieces, WebSocket websocket)
+        {
+            var dto = new DeleteFileDto
+            {
+                RequestType = OutgoingRequestType.DELETE_FILE,
+                FilePiecesToDelete = filePieces.Select(x => x.FilePieceId).ToList()
+            };
+
+            await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), websocket);
+        }
+
+        private async Task SendRequestToSendFilePeace(Guid filePieceId, WebSocket selectedWebsocket)
+        {
+            var dto = new SendFileDto
+            {
+                RequestType = OutgoingRequestType.SEND_FILE,
+                FilePieceIds = new List<Guid> {filePieceId}
+            };
+
+            await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), selectedWebsocket);
+        }
+
         private async Task ProcessReceivedConfirmation(ReceivedConfirmationDto dto, WebSocket webSocket)
         {
-            await WriteStringToWebSocketAsync("Sziasztok, Bence vagyok, ez pedig itt az ujabb eurocenter hulyeseg itok ide valami {} ilyen is kell haha ", webSocket);
-
             var userEntity =
                 _dbContext
                     .User
@@ -84,14 +162,52 @@ namespace ThesisServer.BL.Services
 
             _webSocketRepository.InsertOrUpdateUser(userEntity, webSocket);
 
-            var i = 0;
-            while (i < 10)
+            switch (dto.Type)
             {
-                await WriteStringToWebSocketAsync(i.ToString(), webSocket);
-                await Task.Delay(1000);
-
-                i++;
+                case ConfirmationType.SEND_FILE:
+                    break;
+                case ConfirmationType.DELETE_FILE:
+                    await ProcessDeleteConfirmed(dto);
+                    break;
+                case ConfirmationType.SAVE_FILE:
+                    _onlineUserRepository.AddFilePieceToUser(userEntity, dto.ReceiveId);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
+        }
+
+        private async Task ProcessDeleteConfirmed(ReceivedConfirmationDto dto)
+        {
+            //törölni onlineuserrepo-ból
+            //törölni db-ből
+
+            //todo remember to check delete items when log in
+
+            var filePeace = await _dbContext
+                .VirtualFilePiece
+                .Include(x => x.File)
+                .FirstOrDefaultAsync(x => x.FilePieceId == dto.ReceiveId);
+
+            var deleteItem = await _dbContext.DeleteItems.FirstOrDefaultAsync(x => x.FileId == filePeace.FileId && x.UserId == dto.Token1);
+
+            if (deleteItem == null)
+            {
+                _onlineUserRepository.RemoveFilePeaceFromUser(filePeace.FilePieceId, dto.Token1);
+            }
+            else
+            {
+                _dbContext.DeleteItems.Remove(deleteItem);
+
+                _onlineUserRepository.RemoveFilePeaceFromUser(filePeace.FilePieceId, dto.Token1);
+
+                if (!(await _dbContext.DeleteItems.AnyAsync(x => x.FileId == filePeace.FileId)))
+                {
+                    _dbContext.VirtualFile.Remove(filePeace.File);
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
         }
 
         private async Task ProcessAuthenticationAsync(AuthenticationDto dto, WebSocket webSocket)
@@ -103,7 +219,23 @@ namespace ThesisServer.BL.Services
 
             _webSocketRepository.InsertOrUpdateUser(userEntity, webSocket);
 
+            await CheckIfThereAreAnyPendingDeletes(webSocket, userEntity);
+
             await GoIdleAndKeepConnectionOpen(webSocket);
+        }
+
+        private async Task CheckIfThereAreAnyPendingDeletes(WebSocket webSocket, UserEntity userEntity)
+        {
+            var deleteItems = _dbContext.DeleteItems.Where(x => x.UserId == userEntity.Token1);
+
+            if (deleteItems.Any())
+            {
+                foreach (var deleteItem in deleteItems)
+                {
+                    var filePeaces = await _dbContext.VirtualFilePiece.Where(x => x.FileId == deleteItem.FileId).ToListAsync();
+                    await SendRequestToDeleteFilePeaces(filePeaces, webSocket);
+                }
+            }
         }
 
         private async Task GoIdleAndKeepConnectionOpen(WebSocket webSocket)
