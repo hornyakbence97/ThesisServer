@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
 using ThesisServer.Data.Repository.Memory;
+using ThesisServer.Infrastructure.Configuration;
+using ThesisServer.Infrastructure.Helpers;
 using ThesisServer.Infrastructure.Middleware.Helper.Exception;
 using ThesisServer.Model.DTO.Input;
 using ThesisServer.Model.DTO.Output;
@@ -19,15 +21,23 @@ namespace ThesisServer.BL.Services
         private readonly OnlineUserRepository _onlineUserRepository;
         private readonly VirtualNetworkDbContext _dbContext;
         private readonly IUserService _userService;
+        private readonly IWebSocketHandler _webSocketHandler;
+        private readonly FileSettings _fileSettings;
+        private readonly Random _random;
 
         public FileService(
             OnlineUserRepository onlineUserRepository,
             VirtualNetworkDbContext dbContext,
-            IUserService userService)
+            IUserService userService,
+            IOptions<FileSettings> fileSettingsOptions,
+            IWebSocketHandler webSocketHandler)
         {
+            _random = new Random();
             _onlineUserRepository = onlineUserRepository;
             _dbContext = dbContext;
             _userService = userService;
+            _webSocketHandler = webSocketHandler;
+            _fileSettings = fileSettingsOptions.Value;
         }
 
         public async Task AddFilePiecesToOnlineUserAsync(IEnumerable<VirtualFileInput> filePieces, Guid userId)
@@ -52,8 +62,8 @@ namespace ThesisServer.BL.Services
             var userEntity = await _userService.GetUserById(userToken1);
 
             var networkEntity = await _dbContext.Network.FirstOrDefaultAsync(x => x.NetworkId == userEntity.NetworkId)
-                ?? throw new OperationFailedException($"The network {userEntity.NetworkId} not found",
-                    HttpStatusCode.NotFound, null);
+                                ?? throw new OperationFailedException($"The network {userEntity.NetworkId} not found",
+                                    HttpStatusCode.NotFound, null);
 
             var files = _dbContext.VirtualFile.Where(x => x.NetworkId == networkEntity.NetworkId);
 
@@ -135,6 +145,144 @@ namespace ThesisServer.BL.Services
             await _dbContext.SaveDbChangesWithSuccessCheckAsync();
 
             return file;
+        }
+
+        public async Task UploadNewFileAsync(UploadFileDto dto)
+        {
+            /*
+             * 1. split to file peaces by the default max file peace size
+             * 2. Get all the users, who have enough free space to store one peace and online
+             * 3. Store all file peace with these users by the following:
+             * 4. Calculate redundancy value. e.g.: 10 active phones, 30 pieces, 10% redundancy
+             *                 => all phone stores 3 by default, and 3 phone stores 3 more (10%)
+             * 5. Store the additional file peaces with other phones (not the same duplicated)
+             * 6. add the file to the db
+             * 7. add the file peaces to the db
+             * 8. save db
+             */
+
+            // todo implement upload flow
+
+            var uploaderUser = await _userService.GetUserById(dto.UserToken1);
+
+            var chunks = dto.FileBytes.Chunk(_fileSettings.FilePeaceMaxSize);
+            //var redundancy = (double) _fileSettings.RedundancyPercentage / 100; // e.g. 0.1
+
+            var freeUsers = await _userService.GetOnlineUsersInNetworkWhoHaveEnoughFreeSpace(
+                _fileSettings.FilePeaceMaxSize,
+                uploaderUser.NetworkId.Value);
+
+            if (freeUsers.Count == 0)
+            {
+                throw new OperationFailedException(
+                    message: "There is no enough space to save this item",
+                    statusCode: HttpStatusCode.PreconditionFailed,
+                    webSocket: null);
+            }
+
+            var chunksAndIds = chunks.Select(x => (Bytes: x.Bytes, Id: Guid.NewGuid(), OrderNumber: x.OrderNumber));
+
+            var fileEntity = new VirtualFileEntity
+            {
+                NetworkId = uploaderUser.NetworkId.Value,
+                Created = DateTime.Now,
+                FileId = Guid.NewGuid(),
+                FileName = dto.FileName,
+                FileSize = dto.FileBytes.Length,
+                LastModified = DateTime.Now,
+                MimeType = dto.MimeType,
+                UploadedBy = uploaderUser.Token1
+            };
+
+            fileEntity = (await _dbContext.VirtualFile.AddAsync(fileEntity)).Entity;
+
+            var tmpToAddIds = new List<(VirtualFilePieceEntity FIlePieceEntity, byte[] Bytes)>();
+            
+            foreach (var chunksAndId in chunksAndIds)
+            {
+                var filePeaceEntity = new VirtualFilePieceEntity
+                {
+                    FilePieceId = chunksAndId.Id,
+                    FileId = fileEntity.FileId,
+                    FilePieceSize = chunksAndId.Bytes.Length,
+                    OrderNumber = chunksAndId.OrderNumber
+                };
+
+                var entity = (await _dbContext.VirtualFilePiece.AddAsync(filePeaceEntity)).Entity;
+
+                tmpToAddIds.Add((entity, chunksAndId.Bytes));
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            chunksAndIds = tmpToAddIds.Select(x => (
+                Bytes: x.Bytes,
+                Id: x.FIlePieceEntity.FilePieceId,
+                OrderNumber: x.FIlePieceEntity.OrderNumber));
+
+
+            var chunksAndIdsWithRedundancy = AddRedundancy(chunksAndIds.ToArray(), _fileSettings.RedundancyPercentage);
+
+            var relation = new Dictionary<UserEntity, List<(byte[] bytes, Guid Id, int OrderNumber)>>();
+
+            foreach (var freeUser in freeUsers)
+            {
+                relation.Add(freeUser, new List<(byte[] Bytes, Guid Id, int OrderNumber)>());
+            }
+
+            foreach (var fileBytesChunk in chunksAndIdsWithRedundancy)
+            {
+                var haveTheFewestAssociated = relation.FirstOrDefault(re => re.Value.Count == relation.Min(x => x.Value.Count));
+
+                int tryNumber = 0;
+
+                while (haveTheFewestAssociated.Value.Contains(fileBytesChunk) && tryNumber < 1000)
+                {
+                    var tmp = relation.ToArray();
+
+                    haveTheFewestAssociated = tmp[_random.Next(tmp.Length)];
+
+                    tryNumber++;
+                }
+
+                if (tryNumber < 1000)
+                {
+                    haveTheFewestAssociated.Value.Add(fileBytesChunk);
+                }
+            }
+
+            foreach (var relationItem in relation)
+            {
+                foreach (var filePeace in relationItem.Value)
+                {
+                    await _webSocketHandler.SendFilePeaceToUser(filePeace.bytes, relationItem.Key.Token1, filePeace.Id);
+                }
+            }
+        }
+
+        private IEnumerable<(byte[] Bytes, Guid Id, int OrderNumber)> AddRedundancy((byte[] Bytes, Guid Id, int OrderNumber)[] chunks, int redundancyPercentage)
+        {
+            var redundancy = (double) _fileSettings.RedundancyPercentage / 100; // e.g. 0.1
+
+            var additional = (int)Math.Ceiling(chunks.Length * redundancy);
+
+            var selected = new List<(byte[] Bytes, Guid Id, int OrderNumber)>();
+
+            for (int i = 0; i < additional; i++)
+            {
+                var tmpDuplicate = chunks[_random.Next(chunks.Length)];
+
+                while (selected.Contains(tmpDuplicate))
+                {
+                    tmpDuplicate = chunks[_random.Next(chunks.Length)];
+                }
+
+                selected.Add(tmpDuplicate);
+            }
+
+            var response = chunks.Concat(selected.ToArray()).ToArray();
+
+            return response;
         }
     }
 }
