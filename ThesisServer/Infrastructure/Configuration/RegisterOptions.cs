@@ -10,6 +10,7 @@ namespace ThesisServer.Infrastructure.Configuration
             services.AddOptions();
             services.Configure<WebSocketOption>(configuration.GetSection("WebSocket"));
             services.Configure<DatabaseOption>(configuration.GetSection("DataBase"));
+            services.Configure<FileSettings>(configuration.GetSection("FileSettings"));
         }
     }
 }

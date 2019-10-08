@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization.Internal;
 using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
 using ThesisServer.Data.Repository.Memory;
@@ -67,9 +68,32 @@ namespace ThesisServer.BL.Services
 
             foreach (var relatedFilePeace in relatedFilePeaces)
             {
-                if (!filePeacesTheUserHave.Any(x => x == relatedFilePeace.FilePieceId))
+                if (filePeacesTheUserHave != null && !filePeacesTheUserHave.Any(x => x == relatedFilePeace.FilePieceId))
                 {
                     response.Add(relatedFilePeace);
+                }
+            }
+
+            return response;
+        }
+
+        public async Task<List<UserEntity>> GetOnlineUsersInNetworkWhoHaveEnoughFreeSpace(
+            int fileSettingsFilePeaceMaxSize,
+            Guid uploaderUserNetworkId)
+        {
+            var onlineUsers = _onlineUserRepository.UsersInNetworksOnline[uploaderUserNetworkId];
+
+            var response = new List<UserEntity>();
+
+            foreach (var user in onlineUsers)
+            {
+                var tmpUser = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == user);
+
+                var freeSpace = (tmpUser.MaxSpace * 1024 * 1024) - tmpUser.AllocatedSpace;
+
+                if (freeSpace >= fileSettingsFilePeaceMaxSize)
+                {
+                    response.Add(tmpUser);
                 }
             }
 

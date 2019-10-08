@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using ThesisServer.BL.Services;
 using ThesisServer.Data.Repository.Memory;
 using ThesisServer.Model.DTO.Input;
@@ -100,7 +101,7 @@ namespace ThesisServer.Controllers
 
             await _webSocketHandler.CollectFilePeacesFromUsers(filePeacesTheUserDoNotHave);
 
-            var response = (MissingIds: responsePrep, AllIds: relatedFilePeaces.Select(x => (x.FilePieceId, x.OrderNumber)));
+            var response = (MissingIds: filePeacesTheUserDoNotHave.Select(x => (Id: x.FilePieceId, OrderId: x.OrderNumber)), AllIds: relatedFilePeaces.Select(x => (x.FilePieceId, x.OrderNumber)));
 
             return Json(response);
         }
@@ -112,6 +113,27 @@ namespace ThesisServer.Controllers
             var file = await _fileService.AddFileToDelete(dto.FileId, dto.UserToken1Id);
 
             await _webSocketHandler.SendDeleteRequestsForFile(file);
+
+            return Ok();
+        }
+
+        [Route("Upload")]
+        [HttpPost]
+        public async Task<IActionResult> UploadFile(
+            IFormFile fileByte)
+        {
+            var jsonDto = Request.Form["dto"].FirstOrDefault();
+
+            var dto = JsonConvert.DeserializeObject<UploadFileDto>(jsonDto);
+
+            using (var ms = new MemoryStream())
+            {
+                await fileByte.CopyToAsync(ms);
+
+                dto.FileBytes = ms.ToArray();
+            }
+
+            await _fileService.UploadNewFileAsync(dto);
 
             return Ok();
         }

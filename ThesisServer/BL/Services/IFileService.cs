@@ -13,5 +13,6 @@ namespace ThesisServer.BL.Services
         Task<List<VirtualFileDto>> FetchAllFilesForUser(Guid userToken1);
         Task<List<VirtualFilePieceEntity>> GetRelatedFilePeacesForFile(Guid fileId);
         Task<VirtualFileEntity> AddFileToDelete(Guid dtoFileId, Guid dtoUserToken1Id);
+        Task UploadNewFileAsync(UploadFileDto dto);
     }
 }

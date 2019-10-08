@@ -10,5 +10,6 @@ namespace ThesisServer.BL.Services
         Task<UserEntity> CreateUser(string friendlyName, int maxSpace);
         Task<UserEntity> GetUserById(Guid fileUploadedBy);
         Task<List<VirtualFilePieceEntity>> FilterFilePeacesTheUserDoNotHave(List<VirtualFilePieceEntity> relatedFilePeaces, Guid userToken1);
+        Task<List<UserEntity>> GetOnlineUsersInNetworkWhoHaveEnoughFreeSpace(int fileSettingsFilePeaceMaxSize, Guid uploaderUserNetworkId);
     }
 }

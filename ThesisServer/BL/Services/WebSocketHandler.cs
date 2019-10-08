@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
 using ThesisServer.Data.Repository.Memory;
 using ThesisServer.Infrastructure.Configuration;
@@ -97,9 +93,16 @@ namespace ThesisServer.BL.Services
                     .Select(x => x.Value)
                     .ToArray();
 
-                var selectedWebsocket = webSockets[_random.Next(webSockets.Length)];
+                try
+                {
+                    var selectedWebsocket = webSockets[_random.Next(webSockets.Length)];
 
-                await SendRequestToSendFilePeace(filePeaceToCollect.FilePieceId, selectedWebsocket);
+                    await SendRequestToSendFilePeace(filePeaceToCollect.FilePieceId, selectedWebsocket);
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine(exception.Message);
+                }
             }
         }
 
@@ -110,10 +113,16 @@ namespace ThesisServer.BL.Services
                 .FirstOrDefault(x => x.Key == user.ToString())
                 .Value;
 
+            var userEntity = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == user);
+
+            userEntity.AllocatedSpace += fileBytes.Length;
+
+            await _dbContext.SaveChangesAsync();
+
             var dto = new SaveFileDto
             {
                 RequestType = OutgoingRequestType.SAVE_FILE,
-                Files = new List<(byte[] Bytes, Guid Id)> {(fileBytes, filePeaceId)}
+                FilePeaces = new List<(byte[] Bytes, Guid Id)> {(fileBytes, filePeaceId)}
             };
 
             await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), userToSend);
