@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ThesisServer.BL.Helper;
@@ -20,7 +21,7 @@ namespace ThesisServer.BL.Services
     public class FileService : IFileService
     {
         private readonly OnlineUserRepository _onlineUserRepository;
-        private readonly VirtualNetworkDbContext _dbContext;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IUserService _userService;
         private readonly IWebSocketHandler _webSocketHandler;
         private readonly ILogger _logger;
@@ -29,7 +30,7 @@ namespace ThesisServer.BL.Services
 
         public FileService(
             OnlineUserRepository onlineUserRepository,
-            VirtualNetworkDbContext dbContext,
+            IServiceProvider serviceProvider,
             IUserService userService,
             IOptions<FileSettings> fileSettingsOptions,
             IWebSocketHandler webSocketHandler,
@@ -37,15 +38,22 @@ namespace ThesisServer.BL.Services
         {
             _random = new Random();
             _onlineUserRepository = onlineUserRepository;
-            _dbContext = dbContext;
+            _serviceProvider = serviceProvider;
             _userService = userService;
             _webSocketHandler = webSocketHandler;
             _logger = logger;
             _fileSettings = fileSettingsOptions.Value;
         }
 
+        private VirtualNetworkDbContext GetDbContext()
+        {
+            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
+        }
+
         public async Task AddFilePiecesToOnlineUserAsync(IEnumerable<VirtualFileInput> filePieces, Guid userId)
         {
+            var _dbContext = GetDbContext();
+
             if (filePieces == null) throw new ArgumentNullException(nameof(filePieces));
             var userEntity = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userId)
                              ?? throw new OperationFailedException($"The user {userId} not found",
@@ -63,6 +71,8 @@ namespace ThesisServer.BL.Services
 
         public async Task<List<VirtualFileDto>> FetchAllFilesForUser(Guid userToken1)
         {
+            var _dbContext = GetDbContext();
+
             var userEntity = await _userService.GetUserById(userToken1);
 
             var networkEntity = await _dbContext.Network.FirstOrDefaultAsync(x => x.NetworkId == userEntity.NetworkId)
@@ -106,6 +116,8 @@ namespace ThesisServer.BL.Services
 
         public async Task<List<VirtualFilePieceEntity>> GetRelatedFilePeacesForFile(Guid fileId)
         {
+            var _dbContext = GetDbContext();
+
             var fileEntity = await _dbContext
                                  .VirtualFile
                                  .Include(x => x.FilePieces)
@@ -118,6 +130,8 @@ namespace ThesisServer.BL.Services
 
         public async Task<VirtualFileEntity> AddFileToDelete(Guid dtoFileId, Guid dtoUserToken1Id)
         {
+            var _dbContext = GetDbContext();
+
             var file = await _dbContext
                            .VirtualFile
                            .Include(x => x.FilePieces)
@@ -136,7 +150,7 @@ namespace ThesisServer.BL.Services
                     $"The current user {dtoUserToken1Id} is not a part of the network the given file {dtoFileId} belongs to",
                     HttpStatusCode.Forbidden, null);
             }
-
+            //todo disable file so people cannot click on it, and send refresh request
             foreach (var user in network.Users)
             {
                 await _dbContext.DeleteItems.AddAsync(new DeleteFilesRequiredEntity
@@ -153,6 +167,8 @@ namespace ThesisServer.BL.Services
 
         public async Task UploadNewFileAsync(UploadFileDto dto)
         {
+            var _dbContext = GetDbContext();
+
             /*
              * 1. split to file peaces by the default max file peace size
              * 2. Get all the users, who have enough free space to store one peace and online

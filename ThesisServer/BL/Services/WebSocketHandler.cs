@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -24,25 +26,30 @@ namespace ThesisServer.BL.Services
     public class WebSocketHandler : IWebSocketHandler
     {
         private readonly IWebSocketRepository _webSocketRepository;
-        private readonly VirtualNetworkDbContext _dbContext;
         private readonly OnlineUserRepository _onlineUserRepository;
         private readonly ILogger _logger;
+        private readonly IServiceProvider _serviceProvider;
         private readonly WebSocketOption _options;
         private readonly Random _random;
 
         public WebSocketHandler(
             IOptions<WebSocketOption> options,
             IWebSocketRepository webSocketRepository,
-            VirtualNetworkDbContext dbContext,
             OnlineUserRepository onlineUserRepository,
-            ILogger<WebSocketHandler> logger)
+            ILogger<WebSocketHandler> logger,
+            IServiceProvider serviceProvider)
         {
             _webSocketRepository = webSocketRepository;
-            _dbContext = dbContext;
             _onlineUserRepository = onlineUserRepository;
             _logger = logger;
+            _serviceProvider = serviceProvider;
             _random = new Random();
             _options = options.Value;
+        }
+
+        private VirtualNetworkDbContext GetDbContext()
+        {
+            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
         }
 
         public async Task ProcessIncomingRequest(WebSocket webSocket, WebSocketRequestType requestType, BaseDto baseDtoParam = null, string jsonString = null)
@@ -118,6 +125,8 @@ namespace ThesisServer.BL.Services
 
         public async Task SendFilePeaceToUser(byte[] fileBytes, Guid user, Guid filePeaceId)
         {
+            var _dbContext = GetDbContext();
+
             _logger.LogDebug($"Sending file peace {filePeaceId} to user {user}. Filebytes length: {fileBytes.Length}");
 
 
@@ -194,6 +203,8 @@ namespace ThesisServer.BL.Services
 
         private async Task ProcessReceivedConfirmation(ReceivedConfirmationDto dto, WebSocket webSocket)
         {
+            var _dbContext = GetDbContext();
+
             var userEntity =
                 _dbContext
                     .User
@@ -221,25 +232,46 @@ namespace ThesisServer.BL.Services
 
         private async Task ProcessDeleteConfirmed(ReceivedConfirmationDto dto)
         {
+            var _dbContext = GetDbContext();
+
             //törölni onlineuserrepo-ból
             //törölni db-ből
+
+            var user = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == dto.Token1) ??
+                       throw new OperationFailedException(
+                           $"The user {dto.Token1} not found",
+                           HttpStatusCode.NotFound,
+                           null);
+
+            user.AllocatedSpace -= dto.FilePeaceSize;
+            await _dbContext.SaveChangesAsync();
 
             var filePeace = await _dbContext
                 .VirtualFilePiece
                 .Include(x => x.File)
                 .FirstOrDefaultAsync(x => x.FilePieceId == dto.ReceiveId);
 
-            var deleteItem = await _dbContext.DeleteItems.FirstOrDefaultAsync(x => x.FileId == filePeace.FileId && x.UserId == dto.Token1);
+            DeleteFilesRequiredEntity deleteItem;
 
-            if (deleteItem == null)
+            try
             {
-                _onlineUserRepository.RemoveFilePeaceFromUser(filePeace.FilePieceId, dto.Token1);
+                deleteItem =
+                    await _dbContext.DeleteItems.FirstOrDefaultAsync(x =>
+                        x.FileId == filePeace.FileId && x.UserId == dto.Token1);
             }
-            else
+            catch (Exception)
+            {
+                _onlineUserRepository.RemoveFilePeaceFromUser(dto.ReceiveId, dto.Token1);
+                return;
+            }
+
+            _onlineUserRepository.RemoveFilePeaceFromUser(dto.ReceiveId, dto.Token1);
+
+            if (deleteItem != null)
             {
                 _dbContext.DeleteItems.Remove(deleteItem);
 
-                _onlineUserRepository.RemoveFilePeaceFromUser(filePeace.FilePieceId, dto.Token1);
+                await _dbContext.SaveChangesAsync();
 
                 if (!(await _dbContext.DeleteItems.AnyAsync(x => x.FileId == filePeace.FileId)))
                 {
@@ -252,6 +284,8 @@ namespace ThesisServer.BL.Services
 
         private async Task ProcessAuthenticationAsync(AuthenticationDto dto, WebSocket webSocket)
         {
+            var _dbContext = GetDbContext();
+
             var userEntity =
                 await _dbContext
                     .User
@@ -266,7 +300,9 @@ namespace ThesisServer.BL.Services
 
         private async Task CheckIfThereAreAnyPendingDeletes(WebSocket webSocket, UserEntity userEntity)
         {
-            var deleteItems = _dbContext.DeleteItems.Where(x => x.UserId == userEntity.Token1);
+            var _dbContext = GetDbContext();
+
+            var deleteItems = GetDbContext().DeleteItems.Where(x => x.UserId == userEntity.Token1);
 
             if (deleteItems.Any())
             {
