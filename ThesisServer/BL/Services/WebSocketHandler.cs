@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using ThesisServer.Data.Repository.Db;
@@ -24,6 +26,7 @@ namespace ThesisServer.BL.Services
         private readonly IWebSocketRepository _webSocketRepository;
         private readonly VirtualNetworkDbContext _dbContext;
         private readonly OnlineUserRepository _onlineUserRepository;
+        private readonly ILogger _logger;
         private readonly WebSocketOption _options;
         private readonly Random _random;
 
@@ -31,11 +34,13 @@ namespace ThesisServer.BL.Services
             IOptions<WebSocketOption> options,
             IWebSocketRepository webSocketRepository,
             VirtualNetworkDbContext dbContext,
-            OnlineUserRepository onlineUserRepository)
+            OnlineUserRepository onlineUserRepository,
+            ILogger<WebSocketHandler> logger)
         {
             _webSocketRepository = webSocketRepository;
             _dbContext = dbContext;
             _onlineUserRepository = onlineUserRepository;
+            _logger = logger;
             _random = new Random();
             _options = options.Value;
         }
@@ -66,10 +71,15 @@ namespace ThesisServer.BL.Services
             switch (baseDto.RequestType)
             {
                 case WebSocketRequestType.AUTHENTICATION:
+
+                    _logger.LogDebug($"Incoming websocket request {baseDto.RequestType} from user {baseDto.Token1}");
+
                     var authenticationDto = JsonConvert.DeserializeObject<AuthenticationDto>(jsonText);
                     await ProcessAuthenticationAsync(authenticationDto, webSocket);
                     break;
                 case WebSocketRequestType.RECEIVED_COMFIRMATION:
+                    _logger.LogDebug($"Incoming websocket request {baseDto.RequestType} from user {baseDto.Token1}");
+
                     var receiveConfirmationDto = JsonConvert.DeserializeObject<ReceivedConfirmationDto>(jsonText);
                     await ProcessReceivedConfirmation(receiveConfirmationDto, webSocket);
                     break;
@@ -108,6 +118,9 @@ namespace ThesisServer.BL.Services
 
         public async Task SendFilePeaceToUser(byte[] fileBytes, Guid user, Guid filePeaceId)
         {
+            _logger.LogDebug($"Sending file peace {filePeaceId} to user {user}. Filebytes length: {fileBytes.Length}");
+
+
             var userToSend = _webSocketRepository
                 .GetAllActiveUsers()
                 .FirstOrDefault(x => x.Key == user.ToString())
@@ -119,17 +132,30 @@ namespace ThesisServer.BL.Services
 
             await _dbContext.SaveChangesAsync();
 
-            var dto = new SaveFileDto
-            {
-                RequestType = OutgoingRequestType.SAVE_FILE,
-                FilePeaces = new List<(byte[] Bytes, Guid Id)> {(fileBytes, filePeaceId)}
-            };
+            var dtoBytes = AppendArrays(filePeaceId.ToByteArray(), fileBytes);
 
-            await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), userToSend);
+            //#region Debug
+
+            //var szoveg = string.Join(',', fileBytes);
+
+            //await File.WriteAllTextAsync($"server_{filePeaceId.ToString()}.txt", szoveg, CancellationToken.None);
+            
+            //#endregion
+
+            await WriteAsBinaryToWebSocketAsync(dtoBytes, userToSend, WebSocketMessageType.Binary);
+
+            //var dto = new SaveFileDto
+            //{
+            //    RequestType = OutgoingRequestType.SAVE_FILE,
+            //    FilePeaces = new List<(byte[] Bytes, Guid Id)> {(fileBytes, filePeaceId)}
+            //};
+
+            //await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), userToSend);
         }
 
         public async Task SendDeleteRequestsForFile(VirtualFileEntity file)
         {
+
             var users = _onlineUserRepository.UsersInNetworksOnline.FirstOrDefault(x => x.Key == file.NetworkId).Value;
 
             foreach (var user in users.ToList())
@@ -148,6 +174,8 @@ namespace ThesisServer.BL.Services
                 FilePiecesToDelete = filePieces.Select(x => x.FilePieceId).ToList()
             };
 
+            _logger.LogDebug($"Sending delete file peace request. FIle peace: {filePieces.FirstOrDefault()?.FilePieceId}");
+
             await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), websocket);
         }
 
@@ -158,6 +186,8 @@ namespace ThesisServer.BL.Services
                 RequestType = OutgoingRequestType.SEND_FILE,
                 FilePieceIds = new List<Guid> {filePieceId}
             };
+
+            _logger.LogDebug($"Sending SEND FILE request of {filePieceId}");
 
             await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), selectedWebsocket);
         }
@@ -174,11 +204,14 @@ namespace ThesisServer.BL.Services
             switch (dto.Type)
             {
                 case ConfirmationType.SEND_FILE:
+                    _logger.LogDebug($"Confirm arrived. {dto.Type} Arrived: {dto.ReceiveId} to user {dto.Token1}");
                     break;
                 case ConfirmationType.DELETE_FILE:
+                    _logger.LogDebug($"Confirm arrived. {dto.Type} Arrived: {dto.ReceiveId} to user {dto.Token1}");
                     await ProcessDeleteConfirmed(dto);
                     break;
                 case ConfirmationType.SAVE_FILE:
+                    _logger.LogDebug($"Confirm arrived. {dto.Type} Arrived: {dto.ReceiveId} to user {dto.Token1}");
                     _onlineUserRepository.AddFilePieceToUser(userEntity, dto.ReceiveId);
                     break;
                 default:
@@ -190,8 +223,6 @@ namespace ThesisServer.BL.Services
         {
             //törölni onlineuserrepo-ból
             //törölni db-ből
-
-            //todo remember to check delete items when log in
 
             var filePeace = await _dbContext
                 .VirtualFilePiece
@@ -251,9 +282,27 @@ namespace ThesisServer.BL.Services
         {
             while (!webSocket.CloseStatus.HasValue && webSocket.State == WebSocketState.Open)
             {
-                var (baseDto, json) = await ReadWebSocketAsAsync<BaseDto>(webSocket);
+                try
+                {
+                   var (baseDto, json) = await ReadWebSocketAsAsync<BaseDto>(webSocket);
 
-                await ProcessIncomingRequest(webSocket, WebSocketRequestType.REQUEST, baseDto, json);
+                    await ProcessIncomingRequest(webSocket, WebSocketRequestType.REQUEST, baseDto, json);
+                }
+                catch (Exception exception)
+                {
+                    var user = _webSocketRepository
+                        .GetAllActiveUsers()
+                        .FirstOrDefault(x => x.Value == webSocket)
+                        .Key;
+
+                    var userId = Guid.Parse(user);
+
+                    _logger.LogError($"User {userId} websocket disconnected: {exception}");
+
+                    _onlineUserRepository.RemoveUser(userId);
+
+                    _webSocketRepository.RemoveUser(userId);
+                }
             }
         }
 
@@ -282,48 +331,19 @@ namespace ThesisServer.BL.Services
             await WriteAsBinaryToWebSocketAsync(bytes, webSocket, WebSocketMessageType.Text);
         }
 
+        private object _lockObject = new object(); //todo make this generic
         private async Task WriteAsBinaryToWebSocketAsync(byte[] bytes, WebSocket webSocket, WebSocketMessageType type = WebSocketMessageType.Text)
         {
-            if (bytes.Length <= _options.ReceiveBufferSize)
+            //await Task.Delay(3000);
+
+            lock (_lockObject)
             {
-                await webSocket
-                    .SendAsync(
-                        new ArraySegment<byte>(bytes, 0, bytes.Length),
-                        WebSocketMessageType.Text,
-                        true,
-                        CancellationToken.None);
-
-                return;
-            }
-
-            var start = 0;
-            var end = _options.ReceiveBufferSize;
-            var bufferSize = _options.ReceiveBufferSize;
-            var canContinue = true;
-
-            while (canContinue)
-            {
-                var isEndOfMessage = false;
-
-                if (end >= bytes.Length)
-                {
-                    var dif = end - bytes.Length;
-                    bufferSize -= dif;
-
-                    canContinue = false;
-
-                    isEndOfMessage = true;
-                }
-
-                await webSocket.SendAsync(
-                    new ArraySegment<byte>(bytes, start, bufferSize),
-                    type,
-                    isEndOfMessage,
-                    CancellationToken.None);
-
-                start = end;
-
-                end = end + _options.ReceiveBufferSize;
+                webSocket
+                        .SendAsync(
+                            new ArraySegment<byte>(bytes, 0, bytes.Length),
+                            type,
+                            true,
+                            CancellationToken.None).Wait();
             }
         }
 
@@ -336,6 +356,8 @@ namespace ThesisServer.BL.Services
 
             var mainBuffer = new ArraySegment<byte>(bufferArray, 0, inputResult.Count).Array;
 
+            mainBuffer = CutZerosFromTheEnd(mainBuffer, inputResult.Count);
+
             while (!inputResult.EndOfMessage)
             {
                 bufferArray = new byte[_options.ReceiveBufferSize];
@@ -345,13 +367,27 @@ namespace ThesisServer.BL.Services
 
                 var temporaryBuffer = new ArraySegment<byte>(bufferArray, 0, inputResult.Count).Array;
 
+                temporaryBuffer = CutZerosFromTheEnd(temporaryBuffer, inputResult.Count);
+
                 mainBuffer = AppendArrays(mainBuffer, temporaryBuffer);
             }
 
             return Encoding.UTF8.GetString(mainBuffer);
         }
 
-        private static byte[] AppendArrays(byte[] appendThis, byte[] appendWithThis)
+        private static byte[] CutZerosFromTheEnd(byte[] mainBuffer, int inputResultCount)
+        {
+            var response = new byte[inputResultCount];
+
+            for (int i = 0; i < response.Length; i++)
+            {
+                response[i] = mainBuffer[i];
+            }
+
+            return response;
+        }
+
+        public static byte[] AppendArrays(byte[] appendThis, byte[] appendWithThis)
         {
             var tempArray = new byte[appendThis.Length + appendWithThis.Length];
 
