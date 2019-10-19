@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization.Internal;
 using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
@@ -14,17 +15,24 @@ namespace ThesisServer.BL.Services
 {
     public class UserService : IUserService
     {
-        private readonly VirtualNetworkDbContext _dbContext;
+        private readonly IServiceProvider _serviceProvider;
         private readonly OnlineUserRepository _onlineUserRepository;
 
-        public UserService(VirtualNetworkDbContext dbContext, OnlineUserRepository onlineUserRepository)
+        public UserService(IServiceProvider serviceProvider, OnlineUserRepository onlineUserRepository)
         {
-            _dbContext = dbContext;
+            _serviceProvider = serviceProvider;
             _onlineUserRepository = onlineUserRepository;
+        }
+
+        private VirtualNetworkDbContext GetDbContext()
+        {
+            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
         }
 
         public async Task<UserEntity> CreateUser(string friendlyName, int maxSpace)
         {
+            var _dbContext = GetDbContext();
+
             if (string.IsNullOrWhiteSpace(friendlyName))
             {
                 throw new OperationFailedException("You must provide a username", HttpStatusCode.BadRequest, null);
@@ -49,6 +57,8 @@ namespace ThesisServer.BL.Services
 
         public async Task<UserEntity> GetUserById(Guid userToken1)
         {
+            var _dbContext = GetDbContext();
+
             return await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userToken1)
                 ?? throw new OperationFailedException(
                     message: $"User {userToken1} not found",
@@ -58,6 +68,8 @@ namespace ThesisServer.BL.Services
 
         public async Task<List<VirtualFilePieceEntity>> FilterFilePeacesTheUserDoNotHave(List<VirtualFilePieceEntity> relatedFilePeaces, Guid userToken1)
         {
+            var _dbContext = GetDbContext();
+
             var userEntity = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userToken1)
                              ?? throw new OperationFailedException($"The user {userToken1} not found",
                                  HttpStatusCode.NotFound, null);
@@ -81,6 +93,8 @@ namespace ThesisServer.BL.Services
             int fileSettingsFilePeaceMaxSize,
             Guid uploaderUserNetworkId)
         {
+            var _dbContext = GetDbContext();
+
             var onlineUsers = _onlineUserRepository.UsersInNetworksOnline[uploaderUserNetworkId];
 
             var response = new List<UserEntity>();

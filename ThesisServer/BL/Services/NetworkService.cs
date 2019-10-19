@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
 using ThesisServer.Infrastructure.Middleware.Helper.Exception;
@@ -13,15 +14,22 @@ namespace ThesisServer.BL.Services
 {
     public class NetworkService : INetworkService
     {
-        private readonly VirtualNetworkDbContext _dbContext;
+        private readonly IServiceProvider _serviceProvider;
 
-        public NetworkService(VirtualNetworkDbContext dbContext)
+        public NetworkService(IServiceProvider serviceProvider)
         {
-            _dbContext = dbContext;
+            _serviceProvider = serviceProvider;
+        }
+
+        private VirtualNetworkDbContext GetDbContext()
+        {
+            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
         }
 
         public async Task<NetworkEntity> CreateNetwork(string networkName, string passWord)
         {
+            var _dbContext = GetDbContext();
+
             var entity = new NetworkEntity
             {
                 NetworkId = Guid.NewGuid(),
@@ -38,6 +46,8 @@ namespace ThesisServer.BL.Services
 
         public async Task AddUserToNetwork(NetworkEntity networkEntity, UserEntity userEntity, string givenPassword)
         {
+            var _dbContext = GetDbContext();
+
             var network =
                 await _dbContext.Network.FirstOrDefaultAsync(x => x.NetworkId == networkEntity.NetworkId) 
                 ?? throw new OperationFailedException(
@@ -57,6 +67,8 @@ namespace ThesisServer.BL.Services
 
         public async Task<bool> IsUserConnectedToThisNetwork(UserEntity userEntity, NetworkEntity networkEntity)
         {
+            var _dbContext = GetDbContext();
+
             var network =
                 await _dbContext
                     .Network

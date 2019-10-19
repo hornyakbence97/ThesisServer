@@ -96,8 +96,10 @@ namespace ThesisServer.Data.Repository.Memory
             return response;
         }
 
-        public void RemoveFilePeaceFromUser(Guid filePieceId, Guid userId)
+        public void RemoveFilePeaceFromUser(Guid? filePieceId, Guid userId)
         {
+            if (filePieceId == null) return;
+
             var filePeaces = FilePiecesInUsersOnline.FirstOrDefault(x => x.Key == userId).Value;
 
             ConcurrentBag<Guid> tenp = new ConcurrentBag<Guid>();
