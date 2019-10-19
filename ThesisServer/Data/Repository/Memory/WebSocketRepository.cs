@@ -48,5 +48,10 @@ namespace ThesisServer.Data.Repository.Memory
         {
             return _activeUsers;
         }
+
+        public void RemoveUser(Guid userId)
+        {
+            _activeUsers.TryRemove(userId.ToString(), out _);
+        }
     }
 }

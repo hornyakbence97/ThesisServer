@@ -23,6 +23,8 @@ namespace ThesisServer.Infrastructure.Helpers
                     i++;
                 }
 
+                i--;
+
                 if (j != maxChunkSize)
                 {
                     var temp2 = new TResult[j];

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ThesisServer.BL.Helper;
 using ThesisServer.Data.Repository.Db;
@@ -22,6 +23,7 @@ namespace ThesisServer.BL.Services
         private readonly VirtualNetworkDbContext _dbContext;
         private readonly IUserService _userService;
         private readonly IWebSocketHandler _webSocketHandler;
+        private readonly ILogger _logger;
         private readonly FileSettings _fileSettings;
         private readonly Random _random;
 
@@ -30,13 +32,15 @@ namespace ThesisServer.BL.Services
             VirtualNetworkDbContext dbContext,
             IUserService userService,
             IOptions<FileSettings> fileSettingsOptions,
-            IWebSocketHandler webSocketHandler)
+            IWebSocketHandler webSocketHandler,
+            ILogger<FileService> logger)
         {
             _random = new Random();
             _onlineUserRepository = onlineUserRepository;
             _dbContext = dbContext;
             _userService = userService;
             _webSocketHandler = webSocketHandler;
+            _logger = logger;
             _fileSettings = fileSettingsOptions.Value;
         }
 
@@ -251,6 +255,35 @@ namespace ThesisServer.BL.Services
                 }
             }
 
+            //#region Debug
+
+            //byte[] outp = new byte[fileEntity.FileSize];
+            //int i = 0;
+            //foreach (var item in chunksAndIds.OrderBy(x => x.OrderNumber).ToList())
+            //{
+            //    foreach (var itemByte in item.Bytes)
+            //    {
+            //        outp[i] = itemByte;
+            //        i++;
+            //    }
+            //}
+
+            //bool isEqal = true;
+            //for (int j = 0; j < outp.Length; j++)
+            //{
+            //    if (dto.FileBytes[j] != outp[j])
+            //    {
+            //        isEqal = false;
+            //    }
+            //}
+
+            //if (!isEqal)
+            //{
+            //    throw new ApplicationException("The two array size are not the same");
+            //}
+
+            //#endregion
+
             foreach (var relationItem in relation)
             {
                 foreach (var filePeace in relationItem.Value)
@@ -258,6 +291,8 @@ namespace ThesisServer.BL.Services
                     await _webSocketHandler.SendFilePeaceToUser(filePeace.bytes, relationItem.Key.Token1, filePeace.Id);
                 }
             }
+
+            _logger.LogInformation("SUCCESS. All file has been sent.");
         }
 
         private IEnumerable<(byte[] Bytes, Guid Id, int OrderNumber)> AddRedundancy((byte[] Bytes, Guid Id, int OrderNumber)[] chunks, int redundancyPercentage)

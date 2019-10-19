@@ -13,6 +13,37 @@ namespace Tests.UnitTest
     public class UnitTest1 : TestBase
     {
         [Fact]
+        public async Task AppendArrays()
+        {
+            var a = new byte[] { 10, 20, 30, 40, 50};
+            var b = new byte[] { 60, 70, 80, 90, 100, 110 };
+
+            var c = new byte[] { 60, 70, 80, 90, 100, 110 };
+
+            var result = new byte[] { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 };
+
+            var r = WebSocketHandler.AppendArrays(a, b);
+
+            Assert.Equal(result.Length, r.Length);
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                Assert.Equal(result[i], r[i]);
+            }
+
+            r = WebSocketHandler.AppendArrays(r, c);
+
+            result = new byte[] { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 60, 70, 80, 90, 100, 110 };
+
+            Assert.Equal(result.Length, r.Length);
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                Assert.Equal(result[i], r[i]);
+            }
+        }
+
+        [Fact]
         public async Task AddUserToNetworkWithWrongPasswordShouldFailAsync()
         {
             UserEntity user;

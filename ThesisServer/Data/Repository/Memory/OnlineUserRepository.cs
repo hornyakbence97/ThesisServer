@@ -123,5 +123,28 @@ namespace ThesisServer.Data.Repository.Memory
                 }
             }
         }
+
+        public void RemoveUser(Guid userId)
+        {
+            var networkId = UsersInNetworksOnline.FirstOrDefault(x => x.Value.Contains(userId)).Key;
+
+            ConcurrentBag<Guid> temp = new ConcurrentBag<Guid>();
+            foreach (var item in UsersInNetworksOnline[networkId])
+            {
+                if (item.ToString() != userId.ToString())
+                {
+                    temp.Add(item);
+                }
+            }
+
+            UsersInNetworksOnline[networkId] = temp;
+
+            if (!temp.Any())
+            {
+                UsersInNetworksOnline.TryRemove(networkId, out _);
+            }
+
+            FilePiecesInUsersOnline.TryRemove(userId, out _);
+        }
     }
 }

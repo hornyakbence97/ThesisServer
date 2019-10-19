@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -133,9 +134,124 @@ namespace ThesisServer.Controllers
                 dto.FileBytes = ms.ToArray();
             }
 
+            #region Debug
+
+            if (!Directory.Exists("C:\\tmp"))
+            {
+                Directory.CreateDirectory("C:\\tmp");
+            }
+
+            if (Directory.Exists("C:\\tmp\\Incoming"))
+            {
+                Directory.Delete("C:\\tmp\\Incoming", true);
+            }
+
+            Directory.CreateDirectory("C:\\tmp\\Incoming");
+
+            while (!Directory.Exists("C:\\tmp\\Incoming"))
+            {
+                
+            }
+
+            using (var fs = System.IO.File.Create(Path.Combine("C:\\tmp\\Incoming", fileByte.FileName)))
+            {
+                var bb = dto.FileBytes;
+                await fs.WriteAsync(bb, 0, bb.Length);
+            }
+
+            #endregion
+
             await _fileService.UploadNewFileAsync(dto);
 
             return Ok();
         }
+
+        #region Debug
+        [Route("UploadPeaces")]
+        [HttpPost]
+        public async Task<IActionResult> UploadFilePeacesDebug(
+    List<IFormFile> filePieces)
+        {
+            if (!Directory.Exists("C:\\tmp"))
+            {
+                Directory.CreateDirectory("C:\\tmp");
+            }
+
+            if (Directory.Exists("C:\\tmp\\FilePeaces"))
+            {
+                Directory.Delete("C:\\tmp\\FilePeaces", true);
+            }
+
+            Directory.CreateDirectory("C:\\tmp\\FilePeaces");
+
+            foreach (var formFile in filePieces)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    await formFile.CopyToAsync(ms);
+
+                    using (var fs = System.IO.File.Create(Path.Combine("C:\\tmp\\FilePeaces", formFile.FileName)))
+                    {
+                        var bb = ms.ToArray();
+                        await fs.WriteAsync(bb, 0, bb.Length);
+                    }
+                }
+            }
+
+            return Ok();
+        }
+
+        [Route("UploadOpenable")]
+        [HttpPost]
+        public async Task<IActionResult> UploadOpenableDebug(
+            List<IFormFile> filePieces)
+        {
+            if (!Directory.Exists("C:\\tmp"))
+            {
+                Directory.CreateDirectory("C:\\tmp");
+            }
+
+            if (Directory.Exists("C:\\tmp\\Openable"))
+            {
+                Directory.Delete("C:\\tmp\\Openable", true);
+            }
+
+            Directory.CreateDirectory("C:\\tmp\\Openable");
+
+            foreach (var formFile in filePieces)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    await formFile.CopyToAsync(ms);
+
+                    using (var fs = System.IO.File.Create(Path.Combine("C:\\tmp\\Openable", formFile.FileName + ".mp4")))
+                    {
+                        var bb = ms.ToArray();
+                        await fs.WriteAsync(bb, 0, bb.Length);
+                    }
+                }
+            }
+
+            return Ok();
+        }
+
+        [Route("DebugTxt")]
+        [HttpPost]
+        public async Task<IActionResult> DebugTxt(
+           [FromBody] DebugText inn)
+        {
+            await System.IO.File.WriteAllTextAsync($"client_{inn.Id}.txt", inn.Text, CancellationToken.None);
+
+            return Ok();
+        }
+
+        #endregion
+
+    }
+
+    public class DebugText
+    {
+        public string Id { get; set; }
+        public string Text { get; set; }
     }
 }
