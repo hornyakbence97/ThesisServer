@@ -304,11 +304,12 @@ namespace ThesisServer.BL.Services
             {
                 foreach (var filePeace in relationItem.Value)
                 {
-                    await _webSocketHandler.SendFilePeaceToUser(filePeace.bytes, relationItem.Key.Token1, filePeace.Id);
+                    //todo no need for await, because i want to send immediately to all phones and lock is applied
+                    _webSocketHandler.SendFilePeaceToUser(filePeace.bytes, relationItem.Key.Token1, filePeace.Id);
                 }
             }
 
-            _logger.LogInformation("SUCCESS. All file has been sent.");
+            _logger.LogInformation("SUCCESS. All file has been prepared to sent.");
         }
 
         private IEnumerable<(byte[] Bytes, Guid Id, int OrderNumber)> AddRedundancy((byte[] Bytes, Guid Id, int OrderNumber)[] chunks, int redundancyPercentage)

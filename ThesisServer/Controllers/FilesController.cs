@@ -120,6 +120,8 @@ namespace ThesisServer.Controllers
 
         [Route("Upload")]
         [HttpPost]
+        [RequestFormLimits(MultipartBodyLengthLimit = 419430400)] // 400 MB
+        [RequestSizeLimit(419430400)]
         public async Task<IActionResult> UploadFile(
             IFormFile fileByte)
         {
@@ -136,28 +138,28 @@ namespace ThesisServer.Controllers
 
             #region Debug
 
-            if (!Directory.Exists("C:\\tmp"))
-            {
-                Directory.CreateDirectory("C:\\tmp");
-            }
+            //if (!Directory.Exists("C:\\tmp"))
+            //{
+            //    Directory.CreateDirectory("C:\\tmp");
+            //}
 
-            if (Directory.Exists("C:\\tmp\\Incoming"))
-            {
-                Directory.Delete("C:\\tmp\\Incoming", true);
-            }
+            //if (Directory.Exists("C:\\tmp\\Incoming"))
+            //{
+            //    Directory.Delete("C:\\tmp\\Incoming", true);
+            //}
 
-            Directory.CreateDirectory("C:\\tmp\\Incoming");
+            //Directory.CreateDirectory("C:\\tmp\\Incoming");
 
-            while (!Directory.Exists("C:\\tmp\\Incoming"))
-            {
+            //while (!Directory.Exists("C:\\tmp\\Incoming"))
+            //{
                 
-            }
+            //}
 
-            using (var fs = System.IO.File.Create(Path.Combine("C:\\tmp\\Incoming", fileByte.FileName)))
-            {
-                var bb = dto.FileBytes;
-                await fs.WriteAsync(bb, 0, bb.Length);
-            }
+            //using (var fs = System.IO.File.Create(Path.Combine("C:\\tmp\\Incoming", fileByte.FileName)))
+            //{
+            //    var bb = dto.FileBytes;
+            //    await fs.WriteAsync(bb, 0, bb.Length);
+            //}
 
             #endregion
 

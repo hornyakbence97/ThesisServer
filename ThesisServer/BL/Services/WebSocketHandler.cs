@@ -166,7 +166,7 @@ namespace ThesisServer.BL.Services
         {
             var _dbContext = GetDbContext();
 
-            _logger.LogDebug($"Sending file peace {filePeaceId} to user {user}. Filebytes length: {fileBytes.Length}");
+            _logger.LogDebug($"Prepared to Sending file peace {filePeaceId} to user {user}. Filebytes length: {fileBytes.Length}");
 
 
             var userToSend = _webSocketRepository
@@ -191,6 +191,8 @@ namespace ThesisServer.BL.Services
             //#endregion
 
             await WriteAsBinaryToWebSocketAsync(dtoBytes, userToSend, WebSocketMessageType.Binary);
+
+            GC.Collect();
 
             //var dto = new SaveFileDto
             //{
