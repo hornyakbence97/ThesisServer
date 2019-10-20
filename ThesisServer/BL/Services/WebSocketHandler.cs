@@ -31,6 +31,7 @@ namespace ThesisServer.BL.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly WebSocketOption _options;
         private readonly Random _random;
+        private static bool IsPeriodicalCheckRunning = false;
 
         public WebSocketHandler(
             IOptions<WebSocketOption> options,
@@ -45,6 +46,44 @@ namespace ThesisServer.BL.Services
             _serviceProvider = serviceProvider;
             _random = new Random();
             _options = options.Value;
+
+            StartBackgroundWorks();
+        }
+
+        private async Task StartBackgroundWorks()
+        {
+            if (!IsPeriodicalCheckRunning)
+            {
+                StartPeriodicallyCheck();
+            }
+        }
+
+        private async Task StartPeriodicallyCheck()
+        {
+            IsPeriodicalCheckRunning = true;
+
+            await Task.Delay(TimeSpan.FromSeconds(12));
+
+            foreach (var activeUser in _webSocketRepository.GetAllActiveUsers())
+            {
+                var user = Guid.Parse(activeUser.Key);
+
+                try
+                {
+                    //sending ping
+                    await WriteAsBinaryToWebSocketAsync(
+                        bytes: new byte[0],
+                        webSocket: activeUser.Value,
+                        type: WebSocketMessageType.Binary);
+                }
+                catch (Exception)
+                {
+                    _webSocketRepository.RemoveUser(user);
+                    _onlineUserRepository.RemoveUser(user);
+                }
+            }
+
+            StartPeriodicallyCheck();
         }
 
         private VirtualNetworkDbContext GetDbContext()
@@ -367,12 +406,14 @@ namespace ThesisServer.BL.Services
             await WriteAsBinaryToWebSocketAsync(bytes, webSocket, WebSocketMessageType.Text);
         }
 
-        private object _lockObject = new object(); //todo make this generic
+        //private object _lockObject = new object(); //todo make this generic
         private async Task WriteAsBinaryToWebSocketAsync(byte[] bytes, WebSocket webSocket, WebSocketMessageType type = WebSocketMessageType.Text)
         {
             //await Task.Delay(3000);
+            var user = _webSocketRepository.GetAllActiveUsers().FirstOrDefault(x => x.Value == webSocket).Key;
 
-            lock (_lockObject)
+
+            lock (user) //todo consider this
             {
                 webSocket
                         .SendAsync(
@@ -385,6 +426,7 @@ namespace ThesisServer.BL.Services
 
         private async Task<string> ReadStringContentFromWebSocketAsync(WebSocket webSocket)
         {
+
             var bufferArray = new byte[_options.ReceiveBufferSize];
 
             var inputResult = await webSocket
@@ -408,7 +450,21 @@ namespace ThesisServer.BL.Services
                 mainBuffer = AppendArrays(mainBuffer, temporaryBuffer);
             }
 
+            if (inputResult.MessageType == WebSocketMessageType.Binary)
+            {
+                await ProcessBinaryAsync(mainBuffer);
+                return await ReadStringContentFromWebSocketAsync(webSocket);
+            }
+
             return Encoding.UTF8.GetString(mainBuffer);
+        }
+
+        private async Task ProcessBinaryAsync(byte[] mainBuffer)
+        {
+            if (mainBuffer.Length == 0)
+            {
+                //todo send back pong
+            }
         }
 
         private static byte[] CutZerosFromTheEnd(byte[] mainBuffer, int inputResultCount)
