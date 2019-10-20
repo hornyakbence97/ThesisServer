@@ -263,11 +263,38 @@ namespace ThesisServer.BL.Services
                     await ProcessDeleteConfirmed(dto);
                     break;
                 case ConfirmationType.SAVE_FILE:
-                    _logger.LogDebug($"Confirm arrived. {dto.Type} Arrived: {dto.ReceiveId} to user {dto.Token1}");
-                    _onlineUserRepository.AddFilePieceToUser(userEntity, dto.ReceiveId);
+                    await SaveFileConfirmationProcess(dto, userEntity);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private async Task SaveFileConfirmationProcess(ReceivedConfirmationDto dto, UserEntity userEntity)
+        {
+            var _dbContext = GetDbContext();
+
+            _logger.LogDebug($"Confirm arrived. {dto.Type} Arrived: {dto.ReceiveId} to user {dto.Token1}");
+            _onlineUserRepository.AddFilePieceToUser(userEntity, dto.ReceiveId);
+
+            var filePeace = await _dbContext
+                .VirtualFilePiece
+                .Include(x => x.File)
+                .FirstOrDefaultAsync(x => x.FilePieceId == dto.ReceiveId);
+
+            filePeace.IsConfirmed = true;
+
+            await _dbContext.SaveChangesAsync();
+
+            var connectedFilePeEntities = _dbContext
+                .VirtualFilePiece
+                .Where(x => x.FileId == filePeace.FileId);
+
+            if (!connectedFilePeEntities.Any(x => x.IsConfirmed == false))
+            {
+                filePeace.File.IsConfirmed = true;
+                await _dbContext.SaveChangesAsync();
+                _logger.LogInformation($"The file {filePeace.FileId} successfully uploaded to the network");
             }
         }
 
