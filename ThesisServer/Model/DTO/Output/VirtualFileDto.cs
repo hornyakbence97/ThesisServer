@@ -12,5 +12,6 @@ namespace ThesisServer.Model.DTO.Output
         public string MimeType { get; set; }
         public DateTime Created { get; set; }
         public string ModifiedBy { get; set; }
+        public bool IsConfirmed { get; set; }
     }
 }

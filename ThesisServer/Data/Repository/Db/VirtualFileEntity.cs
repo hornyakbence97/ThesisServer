@@ -13,6 +13,7 @@ namespace ThesisServer.Data.Repository.Db
         public string MimeType { get; set; }
         public DateTime Created { get; set; }
         public Guid ModifiedBy { get; set; }
+        public bool IsConfirmed { get; set; }
 
         public List<VirtualFilePieceEntity> FilePieces { get; set; }
 

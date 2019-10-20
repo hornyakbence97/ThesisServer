@@ -107,7 +107,8 @@ namespace ThesisServer.BL.Services
                     LastModified = file.LastModified,
                     Created = file.Created,
                     FileName = file.FileName,
-                    MimeType = file.MimeType
+                    MimeType = file.MimeType,
+                    IsConfirmed = file.IsConfirmed
                 });
             }
 
@@ -211,7 +212,8 @@ namespace ThesisServer.BL.Services
                 FileSize = dto.FileBytes.Length,
                 LastModified = DateTime.Now,
                 MimeType = dto.MimeType,
-                UploadedBy = uploaderUser.Token1
+                UploadedBy = uploaderUser.Token1,
+                IsConfirmed = false
             };
 
             fileEntity = (await _dbContext.VirtualFile.AddAsync(fileEntity)).Entity;
@@ -225,7 +227,8 @@ namespace ThesisServer.BL.Services
                     FilePieceId = chunksAndId.Id,
                     FileId = fileEntity.FileId,
                     FilePieceSize = chunksAndId.Bytes.Length,
-                    OrderNumber = chunksAndId.OrderNumber
+                    OrderNumber = chunksAndId.OrderNumber,
+                    IsConfirmed = false
                 };
 
                 var entity = (await _dbContext.VirtualFilePiece.AddAsync(filePeaceEntity)).Entity;
