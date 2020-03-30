@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ThesisServer.Data.Repository.Memory;
 using ThesisServer.Infrastructure.ExceptionHandle;
@@ -20,7 +21,10 @@ namespace ThesisServer.Infrastructure.Middleware
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, DebugRepository debugRepository)
+        public async Task InvokeAsync(
+            HttpContext context,
+            DebugRepository debugRepository,
+            ILogger<ExceptionHandlerMiddleware> logger)
         {
             try
             {
@@ -28,6 +32,8 @@ namespace ThesisServer.Infrastructure.Middleware
             }
             catch (Exception exception)
             {
+                logger.LogError(exception.ToString());
+
                 debugRepository.Errors.Add((exception.ToString(), DateTime.Now));
 
                 if (!context.Response.HasStarted)

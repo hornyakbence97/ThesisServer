@@ -11,6 +11,8 @@ namespace ThesisServer.Data.Repository.Memory
         public ConcurrentDictionary<Guid, ConcurrentBag<Guid>> UsersInNetworksOnline { get; set; } //all user id for every user in network
         public ConcurrentDictionary<Guid, ConcurrentBag<Guid>> FilePiecesInUsersOnline { get; set; } //all filepiece the user have
 
+        private object _lockObjectGetUsersWhoHaveTheFile = new object();
+
         public OnlineUserRepository()
         {
             UsersInNetworksOnline = new ConcurrentDictionary<Guid, ConcurrentBag<Guid>>();
@@ -83,13 +85,16 @@ namespace ThesisServer.Data.Repository.Memory
         {
             var response = new List<Guid>();
 
-            foreach (var user in FilePiecesInUsersOnline)
+            lock (_lockObjectGetUsersWhoHaveTheFile)
             {
-                var fp = user.Value.ToList();
-
-                if (fp.Contains(filePiece.FilePieceId))
+                foreach (var user in FilePiecesInUsersOnline)
                 {
-                    response.Add(user.Key);
+                    var fp = user.Value.ToList();
+
+                    if (fp.Contains(filePiece.FilePieceId))
+                    {
+                        response.Add(user.Key);
+                    }
                 }
             }
 
@@ -104,7 +109,7 @@ namespace ThesisServer.Data.Repository.Memory
 
             ConcurrentBag<Guid> tenp = new ConcurrentBag<Guid>();
 
-            while (filePeaces.Count > 0)
+            while (filePeaces != null && filePeaces.Count > 0)
             {
                 Guid tmp;
                 if (filePeaces.TryTake(out tmp))

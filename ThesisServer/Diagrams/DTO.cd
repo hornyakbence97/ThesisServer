@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ThesisServer.Model.DTO.Output.NetworkCreateDto" Collapsed="true">
+    <Position X="0.5" Y="1.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAIAA=</HashCode>
+      <FileName>Model\DTO\Output\NetworkCreateDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Output.UserDto" Collapsed="true">
+    <Position X="2.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAhIAA=</HashCode>
+      <FileName>Model\DTO\Output\UserDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Output.VirtualFileDto" Collapsed="true">
+    <Position X="0.5" Y="2" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAAAAAARAAAAAAAACAAAAAAQAAAAoAAJAAAA=</HashCode>
+      <FileName>Model\DTO\Output\VirtualFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.SaveFileDto" Collapsed="true">
+    <Position X="4.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\Class.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.DeleteFileDto" Collapsed="true">
+    <Position X="6.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\DeleteFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.OutgoingBaseDto" Collapsed="true">
+    <Position X="6.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\OutgoingBaseDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.SendFileDto" Collapsed="true">
+    <Position X="9" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\SendFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

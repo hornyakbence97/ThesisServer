@@ -1,0 +1,593 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ThesisServer.BL.Helper.DatabaseHelperExtensions" Collapsed="true">
+    <Position X="24.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>BL\Helper\DatabaseHelperExtensions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.BL.Services.FileService" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="19.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AMAAAIAAAAAAAAAAAAAABABBIAAECAAAAAAEAAAJAAE=</HashCode>
+      <FileName>BL\Services\FileService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ThesisServer.BL.Services.LockService" Collapsed="true">
+    <Position X="22.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI=</HashCode>
+      <FileName>BL\Services\LockService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.BL.Services.NetworkService" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="24.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAAEAAAAAAAAAAABAAAAAAAgABAAAAAABABA=</HashCode>
+      <FileName>BL\Services\NetworkService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ThesisServer.BL.Services.UserService" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="12.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAIAQCAAAAAQAAABABAAQAAAAAAAAAAAAABAAA=</HashCode>
+      <FileName>BL\Services\UserService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ThesisServer.BL.Services.WebSocketHandler" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="14" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACCAQAAAUAAAAAAEICABAhAJAQhAIKIADAEUMIBAAE=</HashCode>
+      <FileName>BL\Services\WebSocketHandler.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ThesisServer.Controllers.DebugController" Collapsed="true">
+    <Position X="14" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAEAAAAAAAA=</HashCode>
+      <FileName>Controllers\DebugController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Controllers.FilesController" Collapsed="true">
+    <Position X="17.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACIAAAAAAAAAIBAAAAgGAAAIAAABAAAEAAEEAAABAQM=</HashCode>
+      <FileName>Controllers\FilesController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Controllers.DebugText" Collapsed="true">
+    <Position X="17.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAA=</HashCode>
+      <FileName>Controllers\FilesController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Controllers.NetworkController" Collapsed="true">
+    <Position X="14" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAABAABAAAAAAEAgAAAAAAAAAAA=</HashCode>
+      <FileName>Controllers\NetworkController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Controllers.UserController" Collapsed="true">
+    <Position X="14" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <FileName>Controllers\UserController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Db.DeleteFilesRequiredEntity" Collapsed="true">
+    <Position X="22.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAIAAAA=</HashCode>
+      <FileName>Data\Repository\Db\DeleteFilesRequiredEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Db.NetworkEntity" Collapsed="true">
+    <Position X="19.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAIIQ=</HashCode>
+      <FileName>Data\Repository\Db\NetworkEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Db.UserEntity" Collapsed="true">
+    <Position X="19.25" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAQAAQhIAA=</HashCode>
+      <FileName>Data\Repository\Db\UserEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Db.VirtualFileEntity" Collapsed="true">
+    <Position X="15.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAAAAAARAAAAAAAACAAAAAAQAAAAoAAZAIAA=</HashCode>
+      <FileName>Data\Repository\Db\VirtualFileEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Db.VirtualFilePieceEntity" Collapsed="true">
+    <Position X="21" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAACAAAAMAAAAAAAgAAIAAAA=</HashCode>
+      <FileName>Data\Repository\Db\VirtualFilePieceEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Db.VirtualNetworkDbContext" Collapsed="true">
+    <Position X="24.5" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAJAEAAAAAAAAAAAAIEAAAAEAQAAAAAAgAAABSAAAA=</HashCode>
+      <FileName>Data\Repository\Db\VirtualNetworkContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Memory.DebugRepository" Collapsed="true">
+    <Position X="15.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Data\Repository\Memory\DebugRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Memory.OnlineUserRepository" Collapsed="true">
+    <Position X="12.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEIAAAAAAAAQAAEAoAAAAIAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>Data\Repository\Memory\OnlineUserRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Memory.OpenRequestsRepository" Collapsed="true">
+    <Position X="14" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEEAAAAAAAAAAAAAACABAgAAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>Data\Repository\Memory\OpenRequestsRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Data.Repository.Memory.WebSocketRepository" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="19.25" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQEAABAAAAAAAAEAAAAAAAgAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Data\Repository\Memory\WebSocketRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Configuration.DatabaseOption" Collapsed="true">
+    <Position X="12.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Configuration\DatabaseOption.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Configuration.FileSettings" Collapsed="true">
+    <Position X="21" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAIAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Configuration\FileSettings.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Configuration.RegisterMappers" Collapsed="true">
+    <Position X="17.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Configuration\RegisterMappers.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Configuration.RegisterOptions" Collapsed="true">
+    <Position X="19.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Configuration\RegisterOptions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Configuration.RegisterServices" Collapsed="true">
+    <Position X="21" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Configuration\RegisterServices.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Configuration.WebSocketOption" Collapsed="true">
+    <Position X="17.5" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAABAAAAAAAAAAAAAACAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Configuration\WebSocketOption.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.ExceptionHandle.ErrorClass" Collapsed="true">
+    <Position X="24.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\ExceptionHandle\ErrorClass.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.ExceptionHandle.HandledException" Collapsed="true">
+    <Position X="5.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAADAAAARAAAAAAAAAAAAAAAAAAAAAAMAAAAAIAAAA=</HashCode>
+      <FileName>Infrastructure\ExceptionHandle\HandledException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Helpers.ArrayExtensionMethods" Collapsed="true">
+    <Position X="19.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Helpers\ArrayExtensionMethods.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Helpers.MapperProfile" Collapsed="true">
+    <Position X="24.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Helpers\MapperProfile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.Helper.Exception.InvalidInputException" Collapsed="true">
+    <Position X="2.75" Y="2" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\Exception\InvalidInputException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.Helper.Exception.OperationFailedException" Collapsed="true">
+    <Position X="4.5" Y="2" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\Exception\OperationFailedException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.Helper.Exception.RequestTypeInvalidException" Collapsed="true">
+    <Position X="6.75" Y="2" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\Exception\RequestTypeInvalidException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.Helper.Exception.RequestTypeNotProvidedException" Collapsed="true">
+    <Position X="9.25" Y="2" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\Exception\RequestTypeNotProvidedException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.Helper.Exception.UserNotFoundException" Collapsed="true">
+    <Position X="0.5" Y="2" Width="2" />
+    <InheritanceLine Type="ThesisServer.Infrastructure.ExceptionHandle.HandledException" ManuallyRouted="true" FixedToPoint="true">
+      <Path>
+        <Point X="6" Y="1.191" />
+        <Point X="6" Y="1.625" />
+        <Point X="1.576" Y="1.625" />
+        <Point X="1.576" Y="2.043" />
+        <Point X="1.562" Y="2.043" />
+        <Point X="1.562" Y="2" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\Exception\UserNotFoundException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.Helper.Extensions" Collapsed="true">
+    <Position X="14" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEgAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\Extensions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.Helper.MiddlewareExtensions" Collapsed="true">
+    <Position X="12.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAg=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\MiddlewareExtensions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.ExceptionHandlerMiddleware" Collapsed="true">
+    <Position X="12.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\ExceptionHandlerMiddleware.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Infrastructure.Middleware.WebSocketHandlerMiddleware" Collapsed="true">
+    <Position X="15.75" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\WebSocketHandlerMiddleware.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.CreateUserTable" Collapsed="true">
+    <Position X="22.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190910164632_CreateUserTable.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.AddToken2ToUserEntity" Collapsed="true">
+    <Position X="15.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190919142335_AddToken2ToUserEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.CerateNetworkEntity" Collapsed="true">
+    <Position X="21" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190921112633_CerateNetworkEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.NetworkEntityChangeHashToByteArrayRemoveString" Collapsed="true">
+    <Position X="22.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190921113600_NetworkEntityChangeHashToByteArrayRemoveString.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.NetworkEntityChangeHashToByteArrayAddByteArray" Collapsed="true">
+    <Position X="21" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190921113626_NetworkEntityChangeHashToByteArrayAddByteArray.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.RelationBetweenUserAndNetwork" Collapsed="true">
+    <Position X="22.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190921123047_RelationBetweenUserAndNetwork.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.UserEntityAddMaxSpace" Collapsed="true">
+    <Position X="22.75" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190922123944_UserEntityAddMaxSpace.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.UserEntityAddMaxSpaceDefaultValue" Collapsed="true">
+    <Position X="24.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190922124050_UserEntityAddMaxSpaceDefaultValue.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.VirtualFileEntityCreatin" Collapsed="true">
+    <Position X="17.5" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190922154842_VirtualFileEntityCreatin.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.VirtualFilePieceEntityCreation" Collapsed="true">
+    <Position X="22.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190922155616_VirtualFilePieceEntityCreation.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.AddFilesToNetwork" Collapsed="true">
+    <Position X="14" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20190924143803_AddFilesToNetwork.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.filePeaceEntityAddOrderNumber" Collapsed="true">
+    <Position X="15.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20191002125235_filePeaceEntityAddOrderNumber.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.DeleteFileEntity" Collapsed="true">
+    <Position X="21" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20191002151224_DeleteFileEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.UserEntityAddAllocatedSpace" Collapsed="true">
+    <Position X="21" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20191006142349_UserEntityAddAllocatedSpace.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.AddedConfirmationToFilePeaceAndFileEntity" Collapsed="true">
+    <Position X="12.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAI=</HashCode>
+      <FileName>Migrations\20191020124017_AddedConfirmationToFilePeaceAndFileEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Migrations.VirtualNetworkDbContextModelSnapshot" Collapsed="true">
+    <Position X="12.25" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAA=</HashCode>
+      <FileName>Migrations\VirtualNetworkDbContextModelSnapshot.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.AddUserToNetworkInput" Collapsed="true">
+    <Position X="17.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAACAAAAAAAgAAAAAAAAAAAAAAAAAIAA=</HashCode>
+      <FileName>Model\DTO\Input\AddUserToNetworkInput.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.AuthenticationDto">
+    <Position X="0.5" Y="7.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAABAAA=</HashCode>
+      <FileName>Model\DTO\Input\AuthenticationDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.BaseDto">
+    <Position X="1.75" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAABAAA=</HashCode>
+      <FileName>Model\DTO\Input\BaseDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.DeleteFileDto" Collapsed="true">
+    <Position X="19.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAIAAAA=</HashCode>
+      <FileName>Model\DTO\Input\DeleteFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.NetworkCreateInput" Collapsed="true">
+    <Position X="17.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAABAAAA=</HashCode>
+      <FileName>Model\DTO\Input\NetworkCreateInput.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.ReceivedConfirmationDto">
+    <Position X="2.75" Y="7.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\Input\ReceivedConfirmationDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.UploadFileDto" Collapsed="true">
+    <Position X="12.25" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAQAAAAAAAAAAAgAAAAAAAAAAABAgAA=</HashCode>
+      <FileName>Model\DTO\Input\UploadFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.UserDto" Collapsed="true">
+    <Position X="17.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAhIAA=</HashCode>
+      <FileName>Model\DTO\Input\UserDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Input.VirtualFileInput" Collapsed="true">
+    <Position X="19.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAABAAAAAAAACAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\Input\VirtualFileInput.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Output.NetworkCreateDto" Collapsed="true">
+    <Position X="15.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAIAA=</HashCode>
+      <FileName>Model\DTO\Output\NetworkCreateDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Output.UserDto" Collapsed="true">
+    <Position X="15.75" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAhIAA=</HashCode>
+      <FileName>Model\DTO\Output\UserDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.Output.VirtualFileDto" Collapsed="true">
+    <Position X="14" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAAAAAARAAAAAAAACAAAAAAQAAAAoAAJAAAA=</HashCode>
+      <FileName>Model\DTO\Output\VirtualFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.SaveFileDto" Collapsed="true">
+    <Position X="0.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\Class.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.DeleteFileDto" Collapsed="true">
+    <Position X="3" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\DeleteFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.OutgoingBaseDto" Collapsed="true">
+    <Position X="3" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\OutgoingBaseDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Model.DTO.WebSocketDto.Output.SendFileDto" Collapsed="true">
+    <Position X="5.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\SendFileDto.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Program" Collapsed="true">
+    <Position X="15.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA=</HashCode>
+      <FileName>Program.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ThesisServer.Startup" Collapsed="true">
+    <Position X="24.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAgAAACAAAAAA=</HashCode>
+      <FileName>Startup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="ThesisServer.BL.Services.IFileService" Collapsed="true">
+    <Position X="12.25" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAIAAAAAAAAAAAAAAAAABAAAEAAAAAAAAAAAIAAA=</HashCode>
+      <FileName>BL\Services\IFileService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ThesisServer.BL.Services.INetworkService" Collapsed="true">
+    <Position X="14" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAEAAAAAAAAAAAAAAAAAAAgABAAAAAAAAAA=</HashCode>
+      <FileName>BL\Services\INetworkService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ThesisServer.BL.Services.IUserService" Collapsed="true">
+    <Position X="15.75" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAIAQAAAAAAQAAAAAAAAQAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>BL\Services\IUserService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ThesisServer.BL.Services.IWebSocketHandler" Collapsed="true">
+    <Position X="17.5" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAAAAAAEAAAAAAABAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>BL\Services\IWebSocketHandler.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ThesisServer.Data.Repository.Memory.IWebSocketRepository" Collapsed="true">
+    <Position X="19.25" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAABAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Data\Repository\Memory\IWebSocketRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="ThesisServer.Infrastructure.Middleware.Helper.WebSocketRequestType" Collapsed="true">
+    <Position X="15.75" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAAIAAQAQAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Middleware\Helper\WebSocketRequestType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ThesisServer.Model.DTO.Input.ConfirmationType" Collapsed="true">
+    <Position X="12.25" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAgAAA=</HashCode>
+      <FileName>Model\DTO\Input\IncomingRequestType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ThesisServer.Model.DTO.WebSocketDto.Output.OutgoingRequestType" Collapsed="true">
+    <Position X="14" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAEAABAAEAgAAA=</HashCode>
+      <FileName>Model\DTO\WebSocketDto\Output\OutgoingRequestType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

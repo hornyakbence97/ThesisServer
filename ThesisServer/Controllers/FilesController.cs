@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using ThesisServer.BL.Services;
 using ThesisServer.Data.Repository.Memory;
@@ -22,19 +24,22 @@ namespace ThesisServer.Controllers
         private readonly IUserService _userService;
         private readonly OpenRequestsRepository _openRequestsRepository;
         private readonly IWebSocketHandler _webSocketHandler;
+        private readonly IServiceProvider _serviceProvider;
 
         public FilesController(
             DebugRepository debugRepository,
             IFileService fileService,
             IUserService userService,
             OpenRequestsRepository openRequestsRepository,
-            IWebSocketHandler webSocketHandler)
+            IWebSocketHandler webSocketHandler,
+            IServiceProvider serviceProvider)
         {
             _debugRepository = debugRepository;
             _fileService = fileService;
             _userService = userService;
             _openRequestsRepository = openRequestsRepository;
             _webSocketHandler = webSocketHandler;
+            _serviceProvider = serviceProvider;
         }
 
         [Route("UploadIdList/{userId}")]
@@ -79,7 +84,7 @@ namespace ThesisServer.Controllers
 
             if (userToSend != null)
             {
-                await _webSocketHandler.SendFilePeaceToUser(fileBytes, userToSend.Token1, filePieceId);
+                await _webSocketHandler.SendFilePeaceToUser(fileBytes, userToSend.Token1, filePieceId, null);
             }
 
             return Ok(fileBytes.Length);
@@ -131,7 +136,7 @@ namespace ThesisServer.Controllers
 
             using (var ms = new MemoryStream())
             {
-                await fileByte.CopyToAsync(ms);
+                fileByte.CopyTo(ms);
 
                 dto.FileBytes = ms.ToArray();
             }
@@ -152,7 +157,7 @@ namespace ThesisServer.Controllers
 
             //while (!Directory.Exists("C:\\tmp\\Incoming"))
             //{
-                
+
             //}
 
             //using (var fs = System.IO.File.Create(Path.Combine("C:\\tmp\\Incoming", fileByte.FileName)))
@@ -163,9 +168,31 @@ namespace ThesisServer.Controllers
 
             #endregion
 
-            await _fileService.UploadNewFileAsync(dto);
+            dto.ServiceScope = _serviceProvider.CreateScope();
+
+            ThreadPool.QueueUserWorkItem(
+                callBack: new WaitCallback(UploadBackground),
+                state: dto);
+
+            GC.Collect();
 
             return Ok();
+        }
+
+        private static async void UploadBackground(object obj)
+        {
+            if (!(obj is UploadFileDto dto))
+            {
+                return;
+            }
+
+            var fileService = dto.ServiceScope.ServiceProvider.GetRequiredService<IFileService>();
+
+            await fileService.UploadNewFileAsync(dto);
+
+            dto.ServiceScope.Dispose();
+
+            dto = null;
         }
 
         #region Debug

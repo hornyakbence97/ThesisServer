@@ -46,7 +46,7 @@ namespace ThesisServer.Data.Repository.Memory
 
         public ConcurrentDictionary<string, WebSocket> GetAllActiveUsers()
         {
-            return _activeUsers;
+            return new ConcurrentDictionary<string, WebSocket>(_activeUsers);
         }
 
         public void RemoveUser(Guid userId)

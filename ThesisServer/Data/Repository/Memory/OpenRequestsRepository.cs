@@ -10,15 +10,22 @@ namespace ThesisServer.Data.Repository.Memory
 {
     public class OpenRequestsRepository
     {
-        private readonly VirtualNetworkDbContext _dbContext;
+        private readonly IServiceScopeFactory _scopeFactory;
 
         //FilePeaceId, and the userId who want it
         private ConcurrentDictionary<Guid, ConcurrentBag<Guid>> _filePeaceIdTheUserWantsToOpen = new ConcurrentDictionary<Guid, ConcurrentBag<Guid>>();
-
+        private object _lockObject = new object();
 
         public OpenRequestsRepository(IServiceScopeFactory scopeFactory)
         {
-            _dbContext = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
+            _scopeFactory = scopeFactory;
+        }
+
+        private (IServiceScope Scope, VirtualNetworkDbContext DbContext) GetScopeDbContext()
+        {
+            var scope = _scopeFactory.CreateScope();
+
+            return (scope, scope.ServiceProvider.GetRequiredService<VirtualNetworkDbContext>());
         }
 
         public void AddItem(Guid filePeaceId, Guid userToken1)
@@ -28,20 +35,23 @@ namespace ThesisServer.Data.Repository.Memory
 
             if (!isSuccess)
             {
-                _filePeaceIdTheUserWantsToOpen.AddOrUpdate(
-                    key: filePeaceId,
-                    addValue: new ConcurrentBag<Guid> { userToken1 },
-                    updateValueFactory: (guid, list) =>
-                    {
-                        if (list == null)
+                lock (_lockObject)
+                {
+                    _filePeaceIdTheUserWantsToOpen.AddOrUpdate(
+                        key: filePeaceId,
+                        addValue: new ConcurrentBag<Guid> { userToken1 },
+                        updateValueFactory: (guid, list) =>
                         {
-                            list = new ConcurrentBag<Guid>();
-                        }
+                            if (list == null)
+                            {
+                                list = new ConcurrentBag<Guid>();
+                            }
 
-                        list.Add(userToken1);
+                            list.Add(userToken1);
 
-                        return list;
-                    });
+                            return list;
+                        });
+                }
 
                 return;
             }
@@ -65,7 +75,15 @@ namespace ThesisServer.Data.Repository.Memory
             Guid response;
             if (listValue.TryTake(out response))
             {
-                return await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == response);
+                var providers = GetScopeDbContext();
+
+                var dbContext = providers.DbContext;
+
+                var resp =  await dbContext.User.FirstOrDefaultAsync(x => x.Token1 == response);
+
+                providers.Scope.Dispose();
+
+                return resp;
             }
 
             return null;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,14 +46,18 @@ namespace ThesisServer.BL.Services
             _fileSettings = fileSettingsOptions.Value;
         }
 
-        private VirtualNetworkDbContext GetDbContext()
+        private (IServiceScope Scope, VirtualNetworkDbContext DbContext) GetScopeDbContext()
         {
-            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
+            var scope = _serviceProvider.CreateScope();
+
+            return (scope, scope.ServiceProvider.GetRequiredService<VirtualNetworkDbContext>());
         }
 
         public async Task AddFilePiecesToOnlineUserAsync(IEnumerable<VirtualFileInput> filePieces, Guid userId)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             if (filePieces == null) throw new ArgumentNullException(nameof(filePieces));
             var userEntity = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userId)
@@ -67,11 +72,15 @@ namespace ThesisServer.BL.Services
                     user: userEntity,
                     filePieceId: Guid.Parse(filePiece.Id));
             }
+
+            providers.Scope.Dispose();
         }
 
         public async Task<List<VirtualFileDto>> FetchAllFilesForUser(Guid userToken1)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var userEntity = await _userService.GetUserById(userToken1);
 
@@ -112,12 +121,16 @@ namespace ThesisServer.BL.Services
                 });
             }
 
+            providers.Scope.Dispose();
+
             return returnList;
         }
 
         public async Task<List<VirtualFilePieceEntity>> GetRelatedFilePeacesForFile(Guid fileId)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var fileEntity = await _dbContext
                                  .VirtualFile
@@ -126,12 +139,18 @@ namespace ThesisServer.BL.Services
                              ?? throw new OperationFailedException($"The file {fileId} not found in the db.",
                                  HttpStatusCode.NotFound, null);
 
-            return fileEntity.FilePieces;
+            var response =  fileEntity.FilePieces;
+
+            providers.Scope.Dispose();
+
+            return response;
         }
 
         public async Task<VirtualFileEntity> AddFileToDelete(Guid dtoFileId, Guid dtoUserToken1Id)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var file = await _dbContext
                            .VirtualFile
@@ -163,12 +182,16 @@ namespace ThesisServer.BL.Services
 
             await _dbContext.SaveDbChangesWithSuccessCheckAsync();
 
+            providers.Scope.Dispose();
+
             return file;
         }
 
         public async Task UploadNewFileAsync(UploadFileDto dto)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             /*
              * 1. split to file peaces by the default max file peace size
@@ -202,6 +225,8 @@ namespace ThesisServer.BL.Services
             }
 
             var chunksAndIds = chunks.Select(x => (Bytes: x.Bytes, Id: Guid.NewGuid(), OrderNumber: x.OrderNumber));
+
+            chunks = null;
 
             var fileEntity = new VirtualFileEntity
             {
@@ -238,6 +263,8 @@ namespace ThesisServer.BL.Services
 
             await _dbContext.SaveChangesAsync();
 
+            chunksAndIds = null;
+
             chunksAndIds = tmpToAddIds.Select(x => (
                 Bytes: x.Bytes,
                 Id: x.FIlePieceEntity.FilePieceId,
@@ -245,6 +272,8 @@ namespace ThesisServer.BL.Services
 
 
             var chunksAndIdsWithRedundancy = AddRedundancy(chunksAndIds.ToArray(), _fileSettings.RedundancyPercentage);
+
+            chunksAndIds = null;
 
             var relation = new Dictionary<UserEntity, List<(byte[] bytes, Guid Id, int OrderNumber)>>();
 
@@ -274,7 +303,9 @@ namespace ThesisServer.BL.Services
                 }
             }
 
-            //#region Debug
+            chunksAndIdsWithRedundancy = null;
+
+            #region Debug
 
             //byte[] outp = new byte[fileEntity.FileSize];
             //int i = 0;
@@ -301,16 +332,26 @@ namespace ThesisServer.BL.Services
             //    throw new ApplicationException("The two array size are not the same");
             //}
 
-            //#endregion
+            #endregion
 
-            foreach (var relationItem in relation)
-            {
-                foreach (var filePeace in relationItem.Value)
+
+                foreach (var relationItem in relation)
                 {
-                    //todo no need for await, because i want to send immediately to all phones and lock is applied
-                    _webSocketHandler.SendFilePeaceToUser(filePeace.bytes, relationItem.Key.Token1, filePeace.Id);
+                    foreach (var filePeace in relationItem.Value)
+                    {
+                        //todo no need for await, because i want to send immediately to all phones and lock is applied
+                        _webSocketHandler
+                            .SendFilePeaceToUser(
+                                fileBytes: filePeace.bytes,
+                                user: relationItem.Key.Token1,
+                                filePeaceId: filePeace.Id,
+                                networkId: uploaderUser.NetworkId.Value);
+                    }
                 }
-            }
+
+                relation = null;
+
+            providers.Scope.Dispose();
 
             _logger.LogInformation("SUCCESS. All file has been prepared to sent.");
         }
