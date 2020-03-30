@@ -12,7 +12,7 @@ namespace ThesisServer.BL.Services
     {
         Task ProcessIncomingRequest(WebSocket webSocket, WebSocketRequestType requestType, BaseDto baseDtoParam = null, string jsonString = null);
         Task CollectFilePeacesFromUsers(List<VirtualFilePieceEntity> filePeacesTheUserDoNotHave);
-        Task SendFilePeaceToUser(byte[] fileBytes, Guid user, Guid filePeaceId);
+        Task SendFilePeaceToUser(byte[] fileBytes, Guid user, Guid filePeaceId, Guid? networkId);
         Task SendDeleteRequestsForFile(VirtualFileEntity file);
     }
 }

@@ -21,14 +21,18 @@ namespace ThesisServer.BL.Services
             _serviceProvider = serviceProvider;
         }
 
-        private VirtualNetworkDbContext GetDbContext()
+        private (IServiceScope Scope, VirtualNetworkDbContext DbContext) GetScopeDbContext()
         {
-            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
+            var scope = _serviceProvider.CreateScope();
+
+            return (scope, scope.ServiceProvider.GetRequiredService<VirtualNetworkDbContext>());
         }
 
         public async Task<NetworkEntity> CreateNetwork(string networkName, string passWord)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var entity = new NetworkEntity
             {
@@ -41,12 +45,18 @@ namespace ThesisServer.BL.Services
 
             await _dbContext.SaveDbChangesWithSuccessCheckAsync();
 
-            return createdEntity.Entity;
+            var response =  createdEntity.Entity;
+
+            providers.Scope.Dispose();
+
+            return response;
         }
 
         public async Task AddUserToNetwork(NetworkEntity networkEntity, UserEntity userEntity, string givenPassword)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var network =
                 await _dbContext.Network.FirstOrDefaultAsync(x => x.NetworkId == networkEntity.NetworkId) 
@@ -63,11 +73,15 @@ namespace ThesisServer.BL.Services
             user.Network = network;
 
             await _dbContext.SaveDbChangesWithSuccessCheckAsync();
+
+            providers.Scope.Dispose();
         }
 
         public async Task<bool> IsUserConnectedToThisNetwork(UserEntity userEntity, NetworkEntity networkEntity)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var network =
                 await _dbContext
@@ -81,7 +95,11 @@ namespace ThesisServer.BL.Services
                 await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userEntity.Token1)
                 ?? throw new OperationFailedException($"The user {userEntity.Token1} not found", HttpStatusCode.NotFound, null);
 
-            return network.Users.Any(x => x.Token1 == user.Token1);
+            var response =  network.Users.Any(x => x.Token1 == user.Token1);
+
+            providers.Scope.Dispose();
+
+            return response;
         }
 
         private void CheckCredentials(NetworkEntity networkEntity, string givenPassword)

@@ -21,6 +21,7 @@ namespace ThesisServer.Infrastructure.Configuration
             services.AddScoped<IFileService, FileService>();
             services.AddSingleton<OnlineUserRepository>();
             services.AddSingleton<OpenRequestsRepository>();
+            services.AddSingleton<LockService>();
         }
     }
 }

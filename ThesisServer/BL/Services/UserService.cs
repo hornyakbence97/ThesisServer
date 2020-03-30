@@ -18,20 +18,26 @@ namespace ThesisServer.BL.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly OnlineUserRepository _onlineUserRepository;
 
+        private object _lockObjectFilterFilePeacesTheUserDoNotHave = new object();
+
         public UserService(IServiceProvider serviceProvider, OnlineUserRepository onlineUserRepository)
         {
             _serviceProvider = serviceProvider;
             _onlineUserRepository = onlineUserRepository;
         }
 
-        private VirtualNetworkDbContext GetDbContext()
+        private (IServiceScope Scope, VirtualNetworkDbContext DbContext) GetScopeDbContext()
         {
-            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
+            var scope = _serviceProvider.CreateScope();
+
+            return (scope, scope.ServiceProvider.GetRequiredService<VirtualNetworkDbContext>());
         }
 
         public async Task<UserEntity> CreateUser(string friendlyName, int maxSpace)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             if (string.IsNullOrWhiteSpace(friendlyName))
             {
@@ -52,23 +58,33 @@ namespace ThesisServer.BL.Services
 
             await _dbContext.SaveDbChangesWithSuccessCheckAsync();
 
+            providers.Scope.Dispose();
+
             return addedUser.Entity;
         }
 
         public async Task<UserEntity> GetUserById(Guid userToken1)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
 
-            return await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userToken1)
+            var _dbContext = providers.DbContext;
+
+            var response =  await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userToken1)
                 ?? throw new OperationFailedException(
                     message: $"User {userToken1} not found",
                     statusCode: HttpStatusCode.NotFound,
                     webSocket: null);
+
+            providers.Scope.Dispose();
+
+            return response;
         }
 
         public async Task<List<VirtualFilePieceEntity>> FilterFilePeacesTheUserDoNotHave(List<VirtualFilePieceEntity> relatedFilePeaces, Guid userToken1)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var userEntity = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == userToken1)
                              ?? throw new OperationFailedException($"The user {userToken1} not found",
@@ -80,11 +96,13 @@ namespace ThesisServer.BL.Services
 
             foreach (var relatedFilePeace in relatedFilePeaces)
             {
-                if (filePeacesTheUserHave != null && !filePeacesTheUserHave.Any(x => x == relatedFilePeace.FilePieceId))
+                if (filePeacesTheUserHave != null && !filePeacesTheUserHave.Any(x => x.ToString() == relatedFilePeace.FilePieceId.ToString()))
                 {
                     response.Add(relatedFilePeace);
                 }
             }
+
+            providers.Scope.Dispose();
 
             return response;
         }
@@ -93,7 +111,9 @@ namespace ThesisServer.BL.Services
             int fileSettingsFilePeaceMaxSize,
             Guid uploaderUserNetworkId)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var onlineUsers = _onlineUserRepository.UsersInNetworksOnline[uploaderUserNetworkId];
 
@@ -110,6 +130,8 @@ namespace ThesisServer.BL.Services
                     response.Add(tmpUser);
                 }
             }
+
+            providers.Scope.Dispose();
 
             return response;
         }

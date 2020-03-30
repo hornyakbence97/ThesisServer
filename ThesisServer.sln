@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.28306.52
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThesisServer", "ThesisServer\ThesisServer.csproj", "{0DE76A4A-F442-4F76-AA40-D8CC2EFC3A3E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "UnitTests\Tests.csproj", "{42ADDA66-6D17-4368-9671-0412C370A4B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "UnitTests\Tests.csproj", "{42ADDA66-6D17-4368-9671-0412C370A4B6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7579CEBC-A00A-4ADF-8034-C4D596C7B92C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

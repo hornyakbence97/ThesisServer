@@ -29,6 +29,8 @@ namespace ThesisServer.BL.Services
         private readonly OnlineUserRepository _onlineUserRepository;
         private readonly ILogger _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IUserService _userService;
+        private readonly LockService _lockService;
         private readonly WebSocketOption _options;
         private readonly Random _random;
         private static bool IsPeriodicalCheckRunning = false;
@@ -38,12 +40,16 @@ namespace ThesisServer.BL.Services
             IWebSocketRepository webSocketRepository,
             OnlineUserRepository onlineUserRepository,
             ILogger<WebSocketHandler> logger,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            IUserService userService,
+            LockService lockService)
         {
             _webSocketRepository = webSocketRepository;
             _onlineUserRepository = onlineUserRepository;
             _logger = logger;
             _serviceProvider = serviceProvider;
+            _userService = userService;
+            _lockService = lockService;
             _random = new Random();
             _options = options.Value;
 
@@ -62,7 +68,7 @@ namespace ThesisServer.BL.Services
         {
             IsPeriodicalCheckRunning = true;
 
-            await Task.Delay(TimeSpan.FromSeconds(12));
+            await Task.Delay(TimeSpan.FromSeconds(20));
 
             foreach (var activeUser in _webSocketRepository.GetAllActiveUsers())
             {
@@ -86,9 +92,11 @@ namespace ThesisServer.BL.Services
             StartPeriodicallyCheck();
         }
 
-        private VirtualNetworkDbContext GetDbContext()
+        private (IServiceScope Scope, VirtualNetworkDbContext DbContext) GetScopeDbContext()
         {
-            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<VirtualNetworkDbContext>();
+            var scope = _serviceProvider.CreateScope();
+
+            return (scope, scope.ServiceProvider.GetRequiredService<VirtualNetworkDbContext>());
         }
 
         public async Task ProcessIncomingRequest(WebSocket webSocket, WebSocketRequestType requestType, BaseDto baseDtoParam = null, string jsonString = null)
@@ -157,50 +165,241 @@ namespace ThesisServer.BL.Services
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine(exception.Message);
+                    _logger.LogError(exception.Message);
                 }
             }
         }
 
-        public async Task SendFilePeaceToUser(byte[] fileBytes, Guid user, Guid filePeaceId)
+        public async Task SendFilePeaceToUser(byte[] fileBytes, Guid user, Guid filePeaceId, Guid? networkId)
         {
-            var _dbContext = GetDbContext();
+            var isSuccess = false;
 
-            _logger.LogDebug($"Prepared to Sending file peace {filePeaceId} to user {user}. Filebytes length: {fileBytes.Length}");
+            while (!isSuccess)
+            {
+                isSuccess = true;
 
+                UserEntity userEntity;
+                KeyValuePair<string, WebSocket> userKeyValuePair;
+                string userStringId = null;
+                WebSocket userWebsocketToSend;
 
-            var userToSend = _webSocketRepository
-                .GetAllActiveUsers()
-                .FirstOrDefault(x => x.Key == user.ToString())
-                .Value;
+                var alreadyTriedUsersList = new List<string>();
 
-            var userEntity = await _dbContext.User.FirstOrDefaultAsync(x => x.Token1 == user);
+                var providers = GetScopeDbContext();
 
-            userEntity.AllocatedSpace += fileBytes.Length;
+                var _dbContext = providers.DbContext;
 
-            await _dbContext.SaveChangesAsync();
+                var dtoBytes = AppendArrays(filePeaceId.ToByteArray(), fileBytes);
 
-            var dtoBytes = AppendArrays(filePeaceId.ToByteArray(), fileBytes);
+                try
+                {
+                    _logger.LogDebug($"Ready to SEND file peace {filePeaceId} to user {user}. Filebytes length: {fileBytes.Length}");
 
-            //#region Debug
+                    userKeyValuePair = _webSocketRepository
+                        .GetAllActiveUsers()
+                        .FirstOrDefault(x => x.Key == user.ToString());
 
-            //var szoveg = string.Join(',', fileBytes);
+                    userStringId = userKeyValuePair.Key;
 
-            //await File.WriteAllTextAsync($"server_{filePeaceId.ToString()}.txt", szoveg, CancellationToken.None);
+                    userWebsocketToSend = userKeyValuePair.Value;
+
+                    if (!string.IsNullOrWhiteSpace(userStringId))
+                    {
+                        _logger.LogDebug($"User found to send {userStringId}");
+
+                        lock (_lockService.GetLockObjectForString(userStringId))
+                        {
+                            _logger.LogDebug($"Lock entered. Locked object: {userStringId}");
+
+                            try
+                            {
+                                userEntity = _dbContext.User.FirstOrDefault(x => x.Token1 == user);
+
+                                userEntity.AllocatedSpace += fileBytes.Length;
+
+                                _dbContext.SaveChanges();
+                            }
+                            catch (Exception e)
+                            {
+                                _logger.LogError($"{e.ToString()}");
+                            }
+                        }
+
+                        _logger.LogDebug($"Lock leaved. Locked object: {userStringId}");
+
+                        _logger.LogDebug($"Start sending bytes to websocket...");
+
+                        await WriteAsBinaryToWebSocketAsync(dtoBytes, userWebsocketToSend, WebSocketMessageType.Binary);
+
+                        _logger.LogDebug($"SUCCESS. Send OK to user {userStringId}.");
+                    }
+                    else
+                    {
+                        _logger.LogError($"User {user} not found in websockets. Send failed.");
+                        throw new Exception();
+                    }
+                
+                    #region Debug
+
+                    //var szoveg = string.Join(',', fileBytes);
+
+                    //await File.WriteAllTextAsync($"server_{filePeaceId.ToString()}.txt", szoveg, CancellationToken.None);
             
-            //#endregion
+                    #endregion  
+                }
+                catch (Exception)
+                {
+                    _logger.LogError($"Failed to send file peace {filePeaceId} to user {user}");
 
-            await WriteAsBinaryToWebSocketAsync(dtoBytes, userToSend, WebSocketMessageType.Binary);
+                    alreadyTriedUsersList.Add(user.ToString());
 
-            GC.Collect();
+                    if (!string.IsNullOrWhiteSpace(userStringId))
+                    {
+                        lock (_lockService.GetLockObjectForString(userStringId))
+                        {
+                            userEntity = _dbContext.User.FirstOrDefault(x => x.Token1 == user);
 
-            //var dto = new SaveFileDto
-            //{
-            //    RequestType = OutgoingRequestType.SAVE_FILE,
-            //    FilePeaces = new List<(byte[] Bytes, Guid Id)> {(fileBytes, filePeaceId)}
-            //};
+                            userEntity.AllocatedSpace -= fileBytes.Length;
 
-            //await WriteStringToWebSocketAsync(JsonConvert.SerializeObject(dto), userToSend);
+                            _dbContext.SaveChanges();
+                        }
+                    }
+
+                    if (networkId.HasValue)
+                    {
+                        var availableUsers =
+                            await _userService.GetOnlineUsersInNetworkWhoHaveEnoughFreeSpace(
+                                fileBytes.Length,
+                                networkId.Value);
+
+                        var selected = availableUsers.FirstOrDefault(x =>
+                            x.AllocatedSpace == availableUsers
+                                .Where(z => !alreadyTriedUsersList.Contains(z.Token1.ToString()))
+                                .Min(y => x.AllocatedSpace));
+
+                        userKeyValuePair = _webSocketRepository
+                            .GetAllActiveUsers()
+                            .FirstOrDefault(x => x.Key == selected.Token1.ToString());
+
+                        userStringId = userKeyValuePair.Key;
+
+                        userWebsocketToSend = userKeyValuePair.Value;
+
+                        try
+                        {
+                            if (!string.IsNullOrWhiteSpace(userStringId))
+                            {
+                                lock (_lockService.GetLockObjectForString(userStringId))
+                                {
+                                    providers = GetScopeDbContext();
+
+                                    _dbContext = providers.DbContext;
+
+                                    selected =_dbContext.User.First(x => x.Token1 == selected.Token1);
+
+                                    selected.AllocatedSpace += fileBytes.Length;
+                                    _dbContext.SaveChanges();
+                                }
+
+                                await WriteAsBinaryToWebSocketAsync(dtoBytes, userWebsocketToSend, WebSocketMessageType.Binary);
+                            }
+                            else
+                            {
+                                throw new Exception();
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            providers.Scope.Dispose();
+
+                            _logger.LogError($"Failed to send file peace {filePeaceId} to user {selected?.Token1}");
+
+                            alreadyTriedUsersList.Add(selected?.Token1.ToString());
+
+                            if (!string.IsNullOrWhiteSpace(userStringId))
+                            {
+                                lock (_lockService.GetLockObjectForString(userStringId))
+                                {
+                                    providers = GetScopeDbContext();
+                                    _dbContext = providers.DbContext;
+
+                                    selected = _dbContext.User.First(x => x.Token1 == selected.Token1);
+
+                                    selected.AllocatedSpace -= fileBytes.Length;
+                                    _dbContext.SaveChanges();
+                                }
+                            }
+
+                            availableUsers =
+                                await _userService.GetOnlineUsersInNetworkWhoHaveEnoughFreeSpace(
+                                    fileBytes.Length,
+                                    networkId.Value);
+
+                            selected = availableUsers.FirstOrDefault(x =>
+                                x.AllocatedSpace == availableUsers
+                                    .Where(z => !alreadyTriedUsersList.Contains(z.Token1.ToString()))
+                                    .Max(y => x.AllocatedSpace));
+
+                            userKeyValuePair = _webSocketRepository
+                                .GetAllActiveUsers()
+                                .FirstOrDefault(x => x.Key == selected.Token1.ToString());
+
+                            userStringId = userKeyValuePair.Key;
+
+                            userWebsocketToSend = userKeyValuePair.Value;
+
+                            try
+                            {
+                                if (!string.IsNullOrWhiteSpace(userStringId))
+                                {
+                                    lock (_lockService.GetLockObjectForString(userStringId))
+                                    {
+                                        providers = GetScopeDbContext();
+                                        _dbContext = providers.DbContext;
+
+                                        selected = _dbContext.User.First(x => x.Token1 == selected.Token1);
+
+                                        selected.AllocatedSpace += fileBytes.Length;
+                                        _dbContext.SaveChanges();
+                                    }
+
+                                    await WriteAsBinaryToWebSocketAsync(dtoBytes, userWebsocketToSend, WebSocketMessageType.Binary);
+                                }
+                                else
+                                {
+                                    throw new Exception();
+                                }
+                            }
+
+                            catch (Exception)
+                            {
+                                if (!string.IsNullOrWhiteSpace(userStringId))
+                                {
+                                    lock (_lockService.GetLockObjectForString(userStringId))
+                                    {
+                                        providers = GetScopeDbContext();
+                                        _dbContext = providers.DbContext;
+
+                                        selected = _dbContext.User.First(x => x.Token1 == selected.Token1);
+
+                                        selected.AllocatedSpace -= fileBytes.Length;
+                                        _dbContext.SaveChanges();
+
+                                    }
+                                }
+
+                                isSuccess = false;
+                                _logger.LogError($"Failed to send file peace {filePeaceId} to any user");
+                            }
+                        
+                        }
+                    }
+                }
+
+                providers.Scope.Dispose();
+
+               await Task.Delay(1500);
+            }
         }
 
         public async Task SendDeleteRequestsForFile(VirtualFileEntity file)
@@ -244,7 +443,9 @@ namespace ThesisServer.BL.Services
 
         private async Task ProcessReceivedConfirmation(ReceivedConfirmationDto dto, WebSocket webSocket)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var userEntity =
                 _dbContext
@@ -268,11 +469,15 @@ namespace ThesisServer.BL.Services
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+
+            providers.Scope.Dispose();
         }
 
         private async Task SaveFileConfirmationProcess(ReceivedConfirmationDto dto, UserEntity userEntity)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             _logger.LogDebug($"Confirm arrived. {dto.Type} Arrived: {dto.ReceiveId} to user {dto.Token1}");
             _onlineUserRepository.AddFilePieceToUser(userEntity, dto.ReceiveId);
@@ -294,13 +499,17 @@ namespace ThesisServer.BL.Services
             {
                 filePeace.File.IsConfirmed = true;
                 await _dbContext.SaveChangesAsync();
-                _logger.LogInformation($"The file {filePeace.FileId} successfully uploaded to the network");
+                _logger.LogInformation($"The file {filePeace.FileId} ONLINE");
             }
+
+            providers.Scope.Dispose();
         }
 
         private async Task ProcessDeleteConfirmed(ReceivedConfirmationDto dto)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             //törölni onlineuserrepo-ból
             //törölni db-ből
@@ -330,6 +539,7 @@ namespace ThesisServer.BL.Services
             catch (Exception)
             {
                 _onlineUserRepository.RemoveFilePeaceFromUser(dto.ReceiveId, dto.Token1);
+                providers.Scope.Dispose();
                 return;
             }
 
@@ -348,11 +558,15 @@ namespace ThesisServer.BL.Services
             }
 
             await _dbContext.SaveChangesAsync();
+
+            providers.Scope.Dispose();
         }
 
         private async Task ProcessAuthenticationAsync(AuthenticationDto dto, WebSocket webSocket)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
+
+            var _dbContext = providers.DbContext;
 
             var userEntity =
                 await _dbContext
@@ -361,6 +575,8 @@ namespace ThesisServer.BL.Services
 
             _webSocketRepository.InsertOrUpdateUser(userEntity, webSocket);
 
+            providers.Scope.Dispose();
+
             await CheckIfThereAreAnyPendingDeletes(webSocket, userEntity);
 
             await GoIdleAndKeepConnectionOpen(webSocket);
@@ -368,9 +584,11 @@ namespace ThesisServer.BL.Services
 
         private async Task CheckIfThereAreAnyPendingDeletes(WebSocket webSocket, UserEntity userEntity)
         {
-            var _dbContext = GetDbContext();
+            var providers = GetScopeDbContext();
 
-            var deleteItems = GetDbContext().DeleteItems.Where(x => x.UserId == userEntity.Token1);
+            var _dbContext = providers.DbContext;
+
+            var deleteItems = _dbContext.DeleteItems.Where(x => x.UserId == userEntity.Token1);
 
             if (deleteItems.Any())
             {
@@ -380,6 +598,8 @@ namespace ThesisServer.BL.Services
                     await SendRequestToDeleteFilePeaces(filePeaces, webSocket);
                 }
             }
+
+            providers.Scope.Dispose();
         }
 
         private async Task GoIdleAndKeepConnectionOpen(WebSocket webSocket)
@@ -399,13 +619,18 @@ namespace ThesisServer.BL.Services
                         .FirstOrDefault(x => x.Value == webSocket)
                         .Key;
 
-                    var userId = Guid.Parse(user);
+                    if (!string.IsNullOrWhiteSpace(user))
+                    {
+                        var userId = Guid.Parse(user);
 
-                    _logger.LogError($"User {userId} websocket disconnected: {exception}");
+                        _logger.LogError($"User {userId} websocket disconnected: {exception}");
 
-                    _onlineUserRepository.RemoveUser(userId);
+                        _onlineUserRepository.RemoveUser(userId);
 
-                    _webSocketRepository.RemoveUser(userId);
+                        _webSocketRepository.RemoveUser(userId);
+                    }
+
+                    _logger.LogError($"User websocket disconnected: {exception}");
                 }
             }
         }
@@ -430,26 +655,68 @@ namespace ThesisServer.BL.Services
 
         private async Task WriteStringToWebSocketAsync(string text, WebSocket webSocket)
         {
+            //var user = _webSocketRepository.GetAllActiveUsers().FirstOrDefault(x => x.Value == webSocket).Key;
+
             byte[] bytes = Encoding.UTF8.GetBytes(text);
 
-            await WriteAsBinaryToWebSocketAsync(bytes, webSocket, WebSocketMessageType.Text);
+            //lock (user)
+            //{
+                await WriteAsBinaryToWebSocketAsync(bytes, webSocket, WebSocketMessageType.Text);
+            ////}
         }
 
         //private object _lockObject = new object(); //todo make this generic
         private async Task WriteAsBinaryToWebSocketAsync(byte[] bytes, WebSocket webSocket, WebSocketMessageType type = WebSocketMessageType.Text)
         {
             //await Task.Delay(3000);
-            var user = _webSocketRepository.GetAllActiveUsers().FirstOrDefault(x => x.Value == webSocket).Key;
+            string user;
 
-
-            lock (user) //todo consider this
+            try
             {
-                webSocket
+                user = _webSocketRepository
+                    .GetAllActiveUsers()
+                    .FirstOrDefault(x => x.Value == webSocket)
+                    .Key;
+
+                if (string.IsNullOrWhiteSpace(user))
+                {
+                    throw new OperationFailedException("User offline", HttpStatusCode.InternalServerError, webSocket);
+                }
+            }
+            catch(Exception)
+            {
+                _logger.LogError("Not able to write websocket to user, because not found");
+                throw new OperationFailedException("User offline", HttpStatusCode.InternalServerError, webSocket);
+            }
+
+            bool isFailed = false;
+            lock (_lockService.GetLockObjectForString(user))
+            {
+                _logger.LogInformation($"ENTERED lock while sending websocket. Object: {user}");
+
+                try
+                {
+                    webSocket
                         .SendAsync(
                             new ArraySegment<byte>(bytes, 0, bytes.Length),
                             type,
                             true,
-                            CancellationToken.None).Wait();
+                            new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token)
+                        .Wait(TimeSpan.FromSeconds(5));
+                }
+                catch (Exception)
+                {
+                    _logger.LogError($"An error happened during writing to websocket...");
+                    isFailed = true;
+                }
+            }
+
+            _logger.LogInformation($"LEFT lock while sending websocket. Object: {user}");
+
+            if (isFailed)
+            {
+                _logger.LogError("Write to websocket was unsuccessful");
+                throw new OperationFailedException("User offline", HttpStatusCode.InternalServerError, webSocket);
             }
         }
 
